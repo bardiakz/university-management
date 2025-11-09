@@ -3,11 +3,21 @@
 ## Multi-Tenancy
 - ### PostgreSQL: Schema-per-tenant (database level isolation)
 
-## Communication Patterns:
-- ### synchronous: API gateway --> gRPC
+## Communications:
+- ### API gateway (single entry point)
+- ### synchronous: API gateway --> gRPC (internal)
 - ### ssynchronous: RabbitMQ
 - ### caching: Redis
 
+## Authentication and Security
+- ### auth-service --> JWT token
+- ### JWT validation per service
+- ### RBAC check per operation
+- ### logging for sensitive operations
+
+## Handling Failure
+- ## circuit breakers
+- ## retry logic
 -------------------------------------------------------------------------------------
 ## Level 2 C4 diagram
 ```mermaid
@@ -68,6 +78,7 @@ flowchart TB
 
 
 ````
+
 
 
 
