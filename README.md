@@ -3,11 +3,11 @@
 ### Communication Patterns:
 
 ##### synchronous: API gateway --> gRPC
-##### Asynchronous: RabbitMQ
-##### Caching: Redis
+##### ssynchronous: RabbitMQ
+##### caching: Redis
 
 
-
+## Level 2 C4 diagram
 ```mermaid
 ---
 config:
@@ -66,5 +66,6 @@ flowchart TB
 
 
 ````
+
 
 
