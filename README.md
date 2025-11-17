@@ -64,7 +64,9 @@ flowchart TB
         Redis["⚡ Redis Cache<br>Port 6379<br><br>• Session storage<br>• JWT blacklist<br>• Response cache<br>• Rate limiting"]
   end
     WebApp["🌐 Web App<br>----<br>student/instructor"] -- HTTPS/REST<br>JSON --> APIGateway["🚪 API Gateway<br>Spring Cloud Gateway<br>Port 8080<br><br>• Request routing<br>• JWT validation<br>• Rate limiting<br>• Load balancing"]
-    APIGateway -- gRPC --> AuthService & UserService & ResourceService & BookingService & MarketplaceService & ExamService & IoTService & TrackingService
+    APIGateway -- "<span style=padding-left:>HTTP/REST</span>" --> AuthService & ResourceService & BookingService & TrackingService & MarketplaceService & ExamService
+    APIGateway -- gRPC --> UserService
+    APIGateway -- "<span style=padding-left: 8px; padding-right: 8px; text-align: center; justify-content: center;>HTTP/REST</span>" --> IoTService
     AuthService -- JDBC --> PostgreSQL
     UserService -- JDBC --> PostgreSQL
     ResourceService -- JDBC --> PostgreSQL
@@ -92,8 +94,8 @@ flowchart TB
     style APIGateway fill:#1168bd,stroke:#0b4884,stroke-width:3px,color:#ffffff
     style MessageBroker fill:#ff6b6b,stroke:#cc5555,stroke-width:3px,color:#ffffff
 
-
 ````
+
 
 
 
