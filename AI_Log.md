@@ -397,3 +397,20 @@ There is no synchronous dependency chain
 Services remain operational even if others fail temporarily
 
 ---
+**Question:**
+```
+How is the system architecture designed to ensure scalability and reliability in the project?
+```
+**Response:**
+The system architecture is designed using microservices to ensure scalability and reliability. Specifically:
+
+Scalability:
+The architecture supports horizontal scaling by adding more resources as the number of concurrent users increases (e.g., during class reservations). This is achieved through the use of load balancers and stateless services, which allow for easy distribution of workloads.
+The system can support an unlimited number of "sellers" and "products" in the marketplace module. This is facilitated by the distributed nature of the system and its ability to scale resources as needed.
+
+Reliability:
+The system incorporates fault tolerance mechanisms to ensure that essential services (like resource booking) continue to function even if one component fails.
+For example, a Circuit Breaker pattern is used to prevent cascading failures between services. In case of an issue in one part of the system, this pattern ensures that other parts can still operate normally without disruption.
+
+These strategies contribute to the system's ability to handle increasing loads while maintaining stable performance and availability.
+---
