@@ -136,7 +136,7 @@ For microservices using event-driven Saga, Kong + Kafka or Traefik + NATS/Rabbit
 
 **Question:**
 ```
-How does your architecture handle failures and ensure reliability across multiple microservices?
+How does this architecture handle failures and ensure reliability across multiple microservices?
 ```
 
 **Response:**
@@ -240,5 +240,4 @@ There is no synchronous dependency chain
 
 Services remain operational even if others fail temporarily
 
-This enables high autonomy and fault tolerance across the system.
 ---
