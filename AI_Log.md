@@ -587,3 +587,153 @@ Tests: concurrency load tests, integration tests, chaos tests.
 
 Observability: tracing, reservation metrics, alerts.
 ---
+
+**Question:**
+What is the role of the API Gateway in JWT validation ?
+
+**Response:**
+When you’re running a microservice architecture — especially one that’s event-driven, loosely coupled, and riddled with distributed transactions — you never want each service to individually struggle with authentication and token verification.
+
+That’s where the API Gateway steps in.
+Think of it as the immune system of your architecture: nothing enters unless it gets scanned, verified, and approved.
+
+
+🧩 1. Why JWT validation shouldn’t be inside each service
+
+In a distributed system with:
+
+10+ microservices
+
+independent deployments
+
+independent scaling
+
+different domains
+
+…forcing every service to validate JWT means duplication, inconsistency, and security drift.
+
+You don’t want a scenario where:
+
+User Service uses expired key set
+
+Booking Service uses an outdated algorithm
+
+Marketplace validates only the signature but not the scopes
+
+Chaos emerges. Attackers love this kind of inconsistency.
+
+🚪 2. The API Gateway becomes the “security bouncer”
+
+Every request must pass through the Gateway before reaching any service.
+
+The Gateway checks:
+
+Is the token present?
+Missing? Reject immediately.
+
+Is the signature valid?
+Compare against Auth Service’s public key.
+
+Is the token expired?
+
+Has it been blacklisted? (Redis)
+
+Does the user have the required roles/permissions?
+
+Microservices remain clean, lightweight, and protected.
+
+🔐 3. What the API Gateway actually validates
+
+JWT validation usually includes:
+
+Signature verification (public key check)
+
+Issuer check (iss)
+
+Audience check (aud)
+
+Expiration check (exp)
+
+Not-before check (nbf)
+
+Scopes / roles / permissions
+
+Token blacklist lookup (logout, compromised tokens)
+
+In your architecture, Redis is the real hero behind the scenes for blacklist storage.
+
+🧱 4. Why the Gateway is perfect for this job
+
+Because it owns all the cross-cutting concerns:
+
+Authentication
+
+Authorization
+
+Rate limiting
+
+Routing
+
+Logging
+
+Monitoring
+
+Request transformation
+
+JWT validation fits naturally into this layer.
+
+Microservices don’t waste CPU cycles parsing JWTs; they simply trust:
+
+“If the API Gateway forwarded this request, the user is verified.”
+
+🔄 5. Flow of JWT validation in your architecture
+
+Let’s walk the request path:
+
+Client --> API Gateway --> Microservice
+
+
+Step-by-step:
+
+Client sends request with Authorization: Bearer <JWT>
+
+Gateway extracts token
+
+Gateway validates token signature using Auth Service’s public key
+
+Gateway checks blacklist in Redis
+
+Gateway checks RBAC rules for the endpoint
+
+Only if valid → Forward to microservice
+
+Microservices now trust the Gateway and operate in a fully secured zone.
+
+🎯 6. Why this matters in a Saga architecture
+
+In Saga (choreography):
+
+Services talk to each other via RabbitMQ
+
+Not every event needs a JWT
+
+Internal trust boundaries are different from external ones
+
+If JWT validation was inside each service, you'd need to validate tokens for events too — which makes no sense.
+
+Gateway solves this elegantly:
+
+🟢 External requests → validated
+🟡 Internal events → trusted network, don’t require JWT
+🔴 Unauthorized user → blocked instantly at the edge
+
+This keeps the Saga flow clean and secure.
+
+🧠 7. Key Takeaways
+Concept  Summary
+API Gateway  First layer of defense, validates JWT before routing
+JWT Validation  Checks signature, expiry, roles, blacklist, etc.
+Microservices  Stay stateless and trust Gateway
+Redis  Stores blacklisted tokens
+Saga Pattern  Internal events bypass JWT; external calls are secured at the edge
+---
