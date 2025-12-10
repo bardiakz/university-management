@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -14,10 +15,13 @@ public class FallbackController {
 
     @GetMapping("/auth")
     public ResponseEntity<?> authFallback() {
+//        log.error("Auth Service fallback triggered - service unavailable");
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Map.of(
                         "error", "Auth Service is currently unavailable",
-                        "message", "Please try again later"
+                        "message", "Please try again later",
+                        "timestamp", LocalDateTime.now(),
+                        "service", "auth-service"
                 ));
     }
 
@@ -26,7 +30,9 @@ public class FallbackController {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Map.of(
                         "error", "User Service is currently unavailable",
-                        "message", "Please try again later"
+                        "message", "Please try again later",
+                        "timestamp", LocalDateTime.now(),
+                        "service", "user-service"
                 ));
     }
 
