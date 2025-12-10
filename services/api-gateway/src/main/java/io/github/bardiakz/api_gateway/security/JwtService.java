@@ -1,4 +1,4 @@
-package io.github.bardiakz.api_gateway;
+package io.github.bardiakz.api_gateway.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

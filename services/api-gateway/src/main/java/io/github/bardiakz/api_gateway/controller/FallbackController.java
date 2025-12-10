@@ -1,4 +1,4 @@
-package io.github.bardiakz.api_gateway;
+package io.github.bardiakz.api_gateway.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
