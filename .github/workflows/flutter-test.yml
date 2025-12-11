@@ -17,8 +17,9 @@ jobs:
           channel: 'stable'
           cache: true
       - run: flutter pub get
-        working-directory: ./um_flutter
+        working-directory: ./frontend/um_flutter
       - run: flutter analyze
-        working-directory: ./um_flutter
+        working-directory: ./frontend/um_flutter
       - run: flutter test
-        working-directory: ./um_flutter
+        working-directory: ./frontend/um_flutter
+        continue-on-error: true

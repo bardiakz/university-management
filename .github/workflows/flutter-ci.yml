@@ -22,13 +22,13 @@ jobs:
           channel: 'stable'
           cache: true
       - run: flutter pub get
-        working-directory: ./um_flutter
+        working-directory: ./frontend/um_flutter
       - run: flutter build apk --release
-        working-directory: ./um_flutter
+        working-directory: ./frontend/um_flutter
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: um_flutter/build/app/outputs/flutter-apk/app-release.apk
+          path: frontend/um_flutter/build/app/outputs/flutter-apk/app-release.apk
 
   build-web:
     runs-on: ubuntu-latest
@@ -40,10 +40,10 @@ jobs:
           channel: 'stable'
           cache: true
       - run: flutter pub get
-        working-directory: ./um_flutter
+        working-directory: ./frontend/um_flutter
       - run: flutter build web --release
-        working-directory: ./um_flutter
+        working-directory: ./frontend/um_flutter
       - uses: actions/upload-artifact@v4
         with:
           name: web-build
-          path: um_flutter/build/web/
+          path: frontend/um_flutter/build/web/
