@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM eclipse-temurin:25-jdk-alpine AS build
 WORKDIR /app
 
@@ -7,14 +8,16 @@ COPY gradle gradle
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
 
-# Download dependencies (cached layer)
-RUN ./gradlew dependencies --no-daemon || true
+# Download dependencies with SHARED cache (using id parameter)
+RUN --mount=type=cache,target=/root/.gradle,id=gradle-cache,sharing=locked \
+    ./gradlew dependencies --no-daemon || true
 
 # Copy source code
 COPY src src
 
-# Build the application
-RUN ./gradlew clean build -x test --no-daemon
+# Build the application with SHARED cache
+RUN --mount=type=cache,target=/root/.gradle,id=gradle-cache,sharing=locked \
+    ./gradlew clean build -x test --no-daemon
 
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app

@@ -51,8 +51,6 @@ services:
   api-gateway:
     build: ./services/api-gateway
     container_name: api-gateway
-    volumes:
-      - gradle_cache:/home/gradle/.gradle
     ports:
       - "8080:8080"
     environment:
@@ -75,8 +73,6 @@ services:
   auth-service:
     build: ./services/auth-service
     container_name: auth-service
-    volumes:
-      - gradle_cache:/home/gradle/.gradle
 #    ports:
 #      - "8081:8081" #tmp for test
     environment:
@@ -96,8 +92,6 @@ services:
   resource-service:
     build: ./services/resource-service
     container_name: resource-service
-    volumes:
-      - gradle_cache:/home/gradle/.gradle
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_URL=jdbc:postgresql://postgres:5432/resourcedb
@@ -122,4 +116,3 @@ networks:
 
 volumes:
   postgres_data:
-  gradle_cache:
