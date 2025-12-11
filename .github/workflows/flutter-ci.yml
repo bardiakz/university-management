@@ -14,8 +14,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '25'
+          distribution: 'temurin'
+          java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.38.4'
@@ -23,7 +23,7 @@ jobs:
           cache: true
       - run: flutter pub get
         working-directory: ./frontend/um_flutter
-      - run: flutter build apk --release
+      - run: flutter build apk --release --no-tree-shake-icons
         working-directory: ./frontend/um_flutter
       - uses: actions/upload-artifact@v4
         with:
@@ -47,3 +47,49 @@ jobs:
         with:
           name: web-build
           path: frontend/um_flutter/build/web/
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - run: flutter pub get
+        working-directory: ./frontend/um_flutter
+      - run: flutter build windows --release
+        working-directory: ./frontend/um_flutter
+      - shell: powershell
+        run: |
+          cd frontend/um_flutter/build/windows/x64/runner/Release
+          Compress-Archive -Path * -DestinationPath ../../../../../../um_flutter-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: frontend/um_flutter/um_flutter-windows.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update -y
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - run: flutter pub get
+        working-directory: ./frontend/um_flutter
+      - run: flutter build linux --release
+        working-directory: ./frontend/um_flutter
+      - run: |
+          cd frontend/um_flutter/build/linux/x64/release/bundle
+          tar -czf ../../../../../um_flutter-linux.tar.gz *
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: frontend/um_flutter/um_flutter-linux.tar.gz
