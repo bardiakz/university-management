@@ -10,86 +10,127 @@ on:
         required: true
 
 jobs:
-  build-all:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: android
-          - os: ubuntu-latest
-            platform: web
-          - os: windows-latest
-            platform: windows
-          - os: ubuntu-latest
-            platform: linux
-    runs-on: ${{ matrix.os }}
+  build-android:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/setup-java@v4
-        if: matrix.platform == 'android'
         with:
           distribution: 'temurin'
           java-version: '17'
-      
-      - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
-        if: matrix.platform == 'linux'
-      
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.38.4'
           channel: 'stable'
           cache: true
-      
       - run: flutter pub get
         working-directory: ./frontend/um_flutter
-      
-      - name: Build ${{ matrix.platform }}
+      - run: flutter build apk --release --no-tree-shake-icons
         working-directory: ./frontend/um_flutter
-        shell: bash
-        run: |
-          case "${{ matrix.platform }}" in
-            android)
-              flutter build apk --release --no-tree-shake-icons
-              cp build/app/outputs/flutter-apk/app-release.apk ../../um_flutter-android.apk
-              ;;
-            web)
-              flutter build web --release
-              cd build/web && tar -czf ../../../um_flutter-web.tar.gz *
-              ;;
-            windows)
-              flutter build windows --release
-              ;;
-            linux)
-              flutter build linux --release
-              cd build/linux/x64/release/bundle && tar -czf ../../../../../um_flutter-linux.tar.gz *
-              ;;
-          esac
-      
-      - name: Create Windows ZIP
-        if: matrix.platform == 'windows'
-        shell: powershell
-        run: Compress-Archive -Path "frontend\um_flutter\build\windows\x64\runner\Release\*" -DestinationPath "um_flutter-windows.zip" -Force
-      
+      - run: flutter build appbundle --release --no-tree-shake-icons
+        working-directory: ./frontend/um_flutter
+      - run: |
+          mkdir -p release
+          cp frontend/um_flutter/build/app/outputs/flutter-apk/app-release.apk release/um_flutter-android.apk
+          cp frontend/um_flutter/build/app/outputs/bundle/release/app-release.aab release/um_flutter-android.aab
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}-release
-          path: |
-            um_flutter-*.apk
-            um_flutter-*.tar.gz
-            um_flutter-*.zip
+          name: android-release
+          path: release/*
 
-  release:
-    needs: build-all
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - run: flutter pub get
+        working-directory: ./frontend/um_flutter
+      - run: flutter build web --release
+        working-directory: ./frontend/um_flutter
+      - run: |
+          mkdir -p release
+          cd frontend/um_flutter/build/web
+          tar -czf ../../../release/um_flutter-web.tar.gz *
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-release
+          path: release/*
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - run: flutter pub get
+        working-directory: ./frontend/um_flutter
+      - run: flutter build windows --release
+        working-directory: ./frontend/um_flutter
+      - shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Compress-Archive -Path "frontend\um_flutter\build\windows\x64\runner\Release\*" -DestinationPath "release\um_flutter-windows.zip" -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: release/*
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.4'
+          channel: 'stable'
+          cache: true
+      - run: flutter pub get
+        working-directory: ./frontend/um_flutter
+      - run: flutter build linux --release
+        working-directory: ./frontend/um_flutter
+      - run: |
+          mkdir -p release
+          cd frontend/um_flutter/build/linux/x64/release/bundle
+          tar -czf ../../../../../release/um_flutter-linux.tar.gz *
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          path: release/*
+
+  create-release:
+    needs: [build-android, build-web, build-windows, build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      
+      - run: |
+          mkdir -p release-files
+          find artifacts -type f \( -name "*.apk" -o -name "*.aab" -o -name "*.tar.gz" -o -name "*.zip" \) -exec cp {} release-files/ \;
+          ls -lh release-files/
+      - id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
       - uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
           generate_release_notes: true
+          files: release-files/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
