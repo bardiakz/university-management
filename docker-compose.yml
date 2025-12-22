@@ -114,7 +114,7 @@ services:
   exam-service:
   build: ./exam-service
   ports:
-    - "8085:8085"
+    - "8087:8087"
   depends_on:
     - exam-db
 

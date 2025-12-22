@@ -1,5 +1,5 @@
 @Service
-public class ExamService {
+public class ExamServiceApplication {
 
 
 private final ExamRepository examRepository;
