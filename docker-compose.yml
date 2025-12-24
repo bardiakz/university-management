@@ -109,7 +109,33 @@ services:
         condition: service_healthy
     networks:
       - microservices-network
-      
+  
+  # Booking Service
+  booking-service:
+    build: ./services/booking-service
+    container_name: booking-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_URL=jdbc:postgresql://postgres:5432/bookingdb
+      - DB_USERNAME=booking_user
+      - DB_PASSWORD=booking_pass
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=admin
+      - RABBITMQ_PASSWORD=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - INTERNAL_API_SECRET=${INTERNAL_API_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
 networks:
   microservices-network:
     driver: bridge

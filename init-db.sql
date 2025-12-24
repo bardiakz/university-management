@@ -15,3 +15,11 @@ GRANT ALL PRIVILEGES ON DATABASE resourcedb TO resource_user;
 -- Connect to resourcedb and grant schema privileges
 \c resourcedb;
 GRANT ALL ON SCHEMA public TO resource_user;
+
+-- Create the bookingdb database
+CREATE DATABASE bookingdb;
+CREATE USER booking_user WITH PASSWORD 'booking_pass';
+GRANT ALL PRIVILEGES ON DATABASE bookingdb TO booking_user;
+
+\c bookingdb;
+GRANT ALL ON SCHEMA public TO booking_user;
