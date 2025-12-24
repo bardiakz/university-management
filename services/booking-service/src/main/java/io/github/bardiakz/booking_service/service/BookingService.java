@@ -10,8 +10,8 @@ import jakarta.persistence.OptimisticLockException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
+//import org.springframework.retry.annotation.Backoff;
+//import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,11 +38,11 @@ public class BookingService {
      * Retries up to 3 times if concurrent booking attempts occur
      */
     @Transactional
-    @Retryable(
-            retryFor = {OptimisticLockException.class, ObjectOptimisticLockingFailureException.class},
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 100)
-    )
+//    @Retryable(
+//            retryFor = {OptimisticLockException.class, ObjectOptimisticLockingFailureException.class},
+//            maxAttempts = 3,
+//            backoff = @Backoff(delay = 100)
+//    )
     public BookingResponse createBooking(CreateBookingRequest request, String userId) {
         log.info("Creating booking for resource {} by user {}", request.resourceId(), userId);
 
