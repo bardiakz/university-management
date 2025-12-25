@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/product.dart';
 import '../providers/marketplace_providers.dart';
+import '../providers/app_providers.dart';
 import 'my_orders_screen.dart';
+import 'add_product_screen.dart';
 
 class MarketplaceScreen extends ConsumerWidget {
   const MarketplaceScreen({super.key});
@@ -10,6 +12,8 @@ class MarketplaceScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productsAsync = ref.watch(productsProvider);
+    final authState = ref.watch(authProvider);
+    final user = authState.value;
 
     return Scaffold(
       appBar: AppBar(
@@ -56,15 +60,36 @@ class MarketplaceScreen extends ConsumerWidget {
             children: [
               Text('Error: $e'),
               ElevatedButton(
-                  onPressed: () => ref.invalidate(productsProvider),
-                  child: const Text('Retry'))
+                onPressed: () => ref.invalidate(productsProvider),
+                child: const Text('Retry'),
+              ),
             ],
           ),
         ),
       ),
+      // FAB for FACULTY users only
+      floatingActionButton: user?.isFaculty == true
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddProductScreen(),
+                  ),
+                );
+                if (result == true) {
+                  ref.invalidate(productsProvider);
+                }
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Add Product'),
+            )
+          : null,
     );
   }
 }
+
+// Rest of your _ProductCard, _BuyDialog code stays the same...
 
 class _ProductCard extends ConsumerWidget {
   final Product product;
@@ -79,7 +104,9 @@ class _ProductCard extends ConsumerWidget {
 
     if (quantity != null) {
       try {
-        await ref.read(marketplaceServiceProvider).createOrder(product.id, quantity);
+        await ref
+            .read(marketplaceServiceProvider)
+            .createOrder(product.id, quantity);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Order placed successfully!')),
@@ -89,7 +116,7 @@ class _ProductCard extends ConsumerWidget {
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+            SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
           );
         }
       }
@@ -115,20 +142,44 @@ class _ProductCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-            Text(product.category, style: const TextStyle(fontSize: 10, color: Colors.blue)),
+            Text(
+              product.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              product.category,
+              style: const TextStyle(fontSize: 10, color: Colors.blue),
+            ),
             const SizedBox(height: 4),
-            Text(product.description, style: const TextStyle(fontSize: 12, color: Colors.grey), maxLines: 2, overflow: TextOverflow.ellipsis),
+            Text(
+              product.description,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
             const SizedBox(height: 4),
-            Text('Stock: ${product.stock}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
+            Text(
+              'Stock: ${product.stock}',
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
+            ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('\$${product.price.toStringAsFixed(2)}', style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+                Text(
+                  '\$${product.price.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 IconButton(
                   icon: const Icon(Icons.add_shopping_cart),
-                  onPressed: product.stock > 0 ? () => _buyProduct(context, ref) : null,
+                  onPressed: product.stock > 0
+                      ? () => _buyProduct(context, ref)
+                      : null,
                 ),
               ],
             ),
@@ -162,17 +213,41 @@ class _BuyDialogState extends State<_BuyDialog> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              IconButton(onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null, icon: const Icon(Icons.remove)),
-              Text('$_quantity', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              IconButton(onPressed: _quantity < widget.product.stock ? () => setState(() => _quantity++) : null, icon: const Icon(Icons.add)),
+              IconButton(
+                onPressed: _quantity > 1
+                    ? () => setState(() => _quantity--)
+                    : null,
+                icon: const Icon(Icons.remove),
+              ),
+              Text(
+                '$_quantity',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                onPressed: _quantity < widget.product.stock
+                    ? () => setState(() => _quantity++)
+                    : null,
+                icon: const Icon(Icons.add),
+              ),
             ],
           ),
-          Text('Total: \$${(widget.product.price * _quantity).toStringAsFixed(2)}'),
+          Text(
+            'Total: \$${(widget.product.price * _quantity).toStringAsFixed(2)}',
+          ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        ElevatedButton(onPressed: () => Navigator.pop(context, _quantity), child: const Text('Buy')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, _quantity),
+          child: const Text('Buy'),
+        ),
       ],
     );
   }

@@ -42,17 +42,13 @@ class MarketplaceService {
 
   Future<MarketOrder> createOrder(int productId, int quantity) async {
     try {
-      // Backend expects a list of items: { "items": [ { "productId": 1, "quantity": 2 } ] }
       final response = await http
           .post(
             Uri.parse('${ApiService.baseUrl}/api/marketplace/orders'),
             headers: _getHeaders(),
             body: jsonEncode({
               'items': [
-                {
-                  'productId': productId,
-                  'quantity': quantity,
-                }
+                {'productId': productId, 'quantity': quantity},
               ],
             }),
           )
@@ -92,6 +88,45 @@ class MarketplaceService {
     } catch (e) {
       if (e is AuthException || e is ServerException) rethrow;
       throw NetworkException('Error loading orders: ${e.toString()}');
+    }
+  }
+
+  // Add product creation for FACULTY
+  Future<Product> createProduct({
+    required String name,
+    required String description,
+    required double price,
+    required int stock,
+    required String category,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${ApiService.baseUrl}/api/marketplace/products'),
+            headers: _getHeaders(),
+            body: jsonEncode({
+              'name': name,
+              'description': description,
+              'price': price,
+              'stock': stock,
+              'category': category,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return Product.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 401) {
+        throw AuthException('Unauthorized');
+      } else if (response.statusCode == 403) {
+        throw ServerException('Only FACULTY can create products');
+      } else {
+        final error = jsonDecode(response.body);
+        throw ServerException(error['error'] ?? 'Failed to create product');
+      }
+    } catch (e) {
+      if (e is AuthException || e is ServerException) rethrow;
+      throw NetworkException('Error creating product: ${e.toString()}');
     }
   }
 }
