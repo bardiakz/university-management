@@ -109,7 +109,33 @@ services:
         condition: service_healthy
     networks:
       - microservices-network
-      
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+  
+  notification-service:
+    build: ./services/notification-service
+    container_name: notification-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=admin
+      - RABBITMQ_PASSWORD=admin
+      - MAIL_HOST=mailhog
+      - MAIL_PORT=1025
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    networks:
+      - microservices-network
+
 networks:
   microservices-network:
     driver: bridge
