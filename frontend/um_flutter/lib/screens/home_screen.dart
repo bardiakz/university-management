@@ -5,6 +5,7 @@ import '../providers/app_providers.dart';
 import 'add_resource_screen.dart';
 import 'my_bookings_screen.dart';
 import 'create_booking_screen.dart';
+import 'marketplace_screen.dart';
 import 'placeholder_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -122,11 +123,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ServicePlaceholderScreen(
-                      title: 'Marketplace',
-                      icon: Icons.shopping_cart,
-                      description: 'Browse products and order university supplies.',
-                    ),
+                    builder: (context) => const MarketplaceScreen(),
                   ),
                 );
               },
