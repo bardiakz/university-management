@@ -73,8 +73,8 @@ services:
   auth-service:
     build: ./services/auth-service
     container_name: auth-service
-#    ports:
-#      - "8081:8081" #tmp for test
+    ports:
+      - "8081:8081" #tmp for test
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_URL=jdbc:postgresql://postgres:5432/authdb
@@ -82,8 +82,14 @@ services:
       - DB_PASSWORD=auth_pass
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_API_SECRET=gateway-to-services-secret-123
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=admin
+      - RABBITMQ_PASSWORD=admin
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - microservices-network
