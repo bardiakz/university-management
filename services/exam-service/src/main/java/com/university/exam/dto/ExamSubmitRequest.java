@@ -1,10 +1,12 @@
+package com.university.exam.dto;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import javax.validation.constraints.NotNull;
-import java.util.Map;
+import java.util.List;
 
 @Data
 public class ExamSubmitRequest {
 
     @NotNull(message = "Answers cannot be null")
-    private Map<Long, String> answers;
+    private List<AnswerDto> answers;
 }

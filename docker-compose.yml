@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # PostgreSQL - Shared database server
   postgres:
@@ -8,7 +10,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - microservices-network
@@ -46,7 +48,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      
+
   # API Gateway
   api-gateway:
     build: ./services/api-gateway
@@ -68,13 +70,10 @@ services:
     networks:
       - microservices-network
 
-      
   # Auth Service
   auth-service:
     build: ./services/auth-service
     container_name: auth-service
-#    ports:
-#      - "8081:8081" #tmp for test
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_URL=jdbc:postgresql://postgres:5432/authdb
@@ -110,21 +109,40 @@ services:
     networks:
       - microservices-network
 
+  # Exam DB (دیتابیس اختصاصی exam-service)
+  exam-db:
+    image: postgres:16  # بهتره نسخه مشخص کنی مثل بقیه
+    container_name: exam-db
+    environment:
+      POSTGRES_DB: examdb
+      POSTGRES_USER: exam
+      POSTGRES_PASSWORD: exam
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U exam -d examdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Exam Service
   exam-service:
-  build: ./exam-service
-  ports:
-    - "8087:8087"
-  depends_on:
-    - exam-db
+    build:
+      context: ./services/exam-service
+      dockerfile: Dockerfile
+    container_name: exam-service
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_API_SECRET=${INTERNAL_API_SECRET}
+    depends_on:
+      exam-db:
+        condition: service_healthy
+    networks:
+      - microservices-network
 
-exam-db:
-  image: postgres
-  environment:
-    POSTGRES_DB: examdb
-    POSTGRES_USER: exam
-    POSTGRES_PASSWORD: exam
-      
 networks:
   microservices-network:
     driver: bridge
