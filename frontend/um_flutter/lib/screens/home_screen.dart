@@ -5,6 +5,7 @@ import '../providers/app_providers.dart';
 import 'add_resource_screen.dart';
 import 'my_bookings_screen.dart';
 import 'create_booking_screen.dart';
+import 'placeholder_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +27,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: const Text('Resources'),
         actions: [
           PopupMenuButton<String>(
+// ... (rest of AppBar actions same as before)
             icon: const Icon(Icons.account_circle),
             itemBuilder: (context) => [
               PopupMenuItem(
@@ -81,6 +83,151 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
           ),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            UserAccountsDrawerHeader(
+              accountName: Text(user?.username ?? 'User'),
+              accountEmail: Text(user?.role ?? ''),
+              currentAccountPicture: const CircleAvatar(
+                child: Icon(Icons.person, size: 40),
+              ),
+              decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+            ),
+            ListTile(
+              leading: const Icon(Icons.inventory_2),
+              title: const Text('Resources'),
+              selected: true,
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.calendar_month),
+              title: const Text('My Bookings'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MyBookingsScreen()),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.shopping_cart),
+              title: const Text('Marketplace'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ServicePlaceholderScreen(
+                      title: 'Marketplace',
+                      icon: Icons.shopping_cart,
+                      description: 'Browse products and order university supplies.',
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.assignment),
+              title: const Text('Online Exams'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ServicePlaceholderScreen(
+                      title: 'Online Exams',
+                      icon: Icons.assignment,
+                      description: 'Take and manage your online university exams.',
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.sensors),
+              title: const Text('IoT Devices'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ServicePlaceholderScreen(
+                      title: 'IoT Devices',
+                      icon: Icons.sensors,
+                      description: 'View real-time sensor data from campus facilities.',
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.directions_bus),
+              title: const Text('Shuttle Tracking'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ServicePlaceholderScreen(
+                      title: 'Shuttle Tracking',
+                      icon: Icons.directions_bus,
+                      description: 'Track university shuttle locations in real-time.',
+                    ),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.notifications),
+              title: const Text('Notifications'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ServicePlaceholderScreen(
+                      title: 'Notifications',
+                      icon: Icons.notifications,
+                      description: 'Stay updated with university announcements.',
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ServicePlaceholderScreen(
+                      title: 'User Profile',
+                      icon: Icons.person,
+                      description: 'Manage your personal information and settings.',
+                    ),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () {
+                Navigator.pop(context);
+                ref.read(authProvider.notifier).logout();
+              },
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
