@@ -3,6 +3,8 @@ services:
   postgres:
     image: postgres:18.1
     container_name: postgres-main
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -35,6 +37,7 @@ services:
     image: rabbitmq:4.2.1-management
     container_name: rabbitmq-broker
     ports:
+      - "5672:5672"
       - "15672:15672"  # Management UI
     environment:
       RABBITMQ_DEFAULT_USER: admin
@@ -56,6 +59,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - AUTH_SERVICE_URL=http://auth-service:8081
+      - MARKETPLACE_SERVICE_URL=http://host.docker.internal:8085
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET}
