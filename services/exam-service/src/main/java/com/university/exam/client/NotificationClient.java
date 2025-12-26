@@ -18,13 +18,14 @@ public class NotificationClient {
         NotificationRequest request = new NotificationRequest(message);
 
         restTemplate.postForObject(
-            "http://notification-service:8088/api/notifications",
-            request,
-            Void.class
+                "http://notification-service:8088/api/notifications",
+                request,
+                Void.class
         );
     }
 
     public void fallback(String message, Throwable t) {
-        System.out.println("Notification Service is DOWN. Notification skipped.");
+        System.err.println("Circuit Breaker فعال شد - سرویس نوتیفیکیشن در دسترس نیست. پیام از دست رفت: " + message);
+        System.err.println("علت: " + t.getMessage());
     }
 }

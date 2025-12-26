@@ -86,32 +86,9 @@ services:
         condition: service_healthy
     networks:
       - microservices-network
-
-  # Resource Service
-  resource-service:
-    build: ./services/resource-service
-    container_name: resource-service
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - DB_URL=jdbc:postgresql://postgres:5432/resourcedb
-      - DB_USERNAME=resource_user
-      - DB_PASSWORD=resource_pass
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USERNAME=admin
-      - RABBITMQ_PASSWORD=admin
-      - INTERNAL_API_SECRET=${INTERNAL_API_SECRET}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - microservices-network
-
-  # Exam DB (دیتابیس اختصاصی exam-service)
+  # Exam DB (for exam-service)
   exam-db:
-    image: postgres:16  # بهتره نسخه مشخص کنی مثل بقیه
+    image: postgres:16  
     container_name: exam-db
     environment:
       POSTGRES_DB: examdb

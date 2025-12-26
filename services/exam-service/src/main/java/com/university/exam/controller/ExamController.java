@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/exams")
-@PreAuthorize("hasRole('INSTRUCTOR')") 
 public class ExamController {
 
     private final ExamService examService;
@@ -24,15 +23,19 @@ public class ExamController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Exam> createExam(@Valid @RequestBody ExamCreateRequest request) {
         Exam exam = examService.createExam(request);
         return ResponseEntity.ok(exam);
     }
 
     @PostMapping("/{id}/submit")
-    public ResponseEntity<ExamSubmission> submitExam(@PathVariable Long id,
-                                                     @Valid @RequestBody ExamSubmitRequest request,
-                                                     @RequestParam String studentId) {
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ExamSubmission> submitExam(
+            @PathVariable Long id,
+            @Valid @RequestBody ExamSubmitRequest request,
+            @RequestParam String studentId) {
+
         ExamSubmission submission = examService.submitExam(id, studentId, request);
         return ResponseEntity.ok(submission);
     }
