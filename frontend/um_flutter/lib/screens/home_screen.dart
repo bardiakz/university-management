@@ -6,7 +6,7 @@ import 'add_resource_screen.dart';
 import 'my_bookings_screen.dart';
 import 'create_booking_screen.dart';
 import 'marketplace_screen.dart';
-import 'placeholder_screen.dart';
+import 'tracking_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -170,11 +170,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ServicePlaceholderScreen(
-                      title: 'Shuttle Tracking',
-                      icon: Icons.directions_bus,
-                      description: 'Track university shuttle locations in real-time.',
-                    ),
+                    builder: (context) => const TrackingScreen(),
                   ),
                 );
               },
