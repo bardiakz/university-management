@@ -1,9 +1,4 @@
-enum ShuttleStatus {
-  ACTIVE,      // Shuttle is currently running
-  INACTIVE,    // Shuttle is not in service
-  MAINTENANCE, // Shuttle is under maintenance
-  OUT_OF_SERVICE
-}
+enum ShuttleStatus { ACTIVE, INACTIVE, MAINTENANCE, OUT_OF_SERVICE }
 
 class ShuttleLocation {
   final int shuttleId;
@@ -26,19 +21,31 @@ class ShuttleLocation {
 
   factory ShuttleLocation.fromJson(Map<String, dynamic> json) {
     return ShuttleLocation(
-      shuttleId: json['shuttleId'],
-      vehicleNumber: json['vehicleNumber'],
-      routeName: json['routeName'],
+      shuttleId: json['shuttleId'] as int,
+      vehicleNumber: json['vehicleNumber'] as String,
+      routeName: json['routeName'] as String,
       status: ShuttleStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == json['status'],
+        (e) => e.name == json['status'],
         orElse: () => ShuttleStatus.INACTIVE,
       ),
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       lastUpdate: json['lastUpdate'] != null
-          ? DateTime.parse(json['lastUpdate'])
+          ? DateTime.parse(json['lastUpdate'] as String)
           : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'shuttleId': shuttleId,
+      'vehicleNumber': vehicleNumber,
+      'routeName': routeName,
+      'status': status.name,
+      'latitude': latitude,
+      'longitude': longitude,
+      'lastUpdate': lastUpdate?.toIso8601String(),
+    };
   }
 }
 
@@ -47,7 +54,7 @@ class Shuttle {
   final String vehicleNumber;
   final String routeName;
   final String? driver;
-  final int? capacity;
+  final int capacity;
   final ShuttleStatus status;
   final double? currentLatitude;
   final double? currentLongitude;
@@ -58,7 +65,7 @@ class Shuttle {
     required this.vehicleNumber,
     required this.routeName,
     this.driver,
-    this.capacity,
+    required this.capacity,
     required this.status,
     this.currentLatitude,
     this.currentLongitude,
@@ -67,13 +74,13 @@ class Shuttle {
 
   factory Shuttle.fromJson(Map<String, dynamic> json) {
     return Shuttle(
-      id: json['id'],
-      vehicleNumber: json['vehicleNumber'],
-      routeName: json['routeName'],
-      driver: json['driver'],
-      capacity: json['capacity'],
+      id: json['id'] as int,
+      vehicleNumber: json['vehicleNumber'] as String,
+      routeName: json['routeName'] as String,
+      driver: json['driver'] as String?,
+      capacity: json['capacity'] as int,
       status: ShuttleStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == json['status'],
+        (e) => e.name == json['status'],
         orElse: () => ShuttleStatus.INACTIVE,
       ),
       currentLatitude: json['currentLatitude'] != null
@@ -83,8 +90,22 @@ class Shuttle {
           ? (json['currentLongitude'] as num).toDouble()
           : null,
       lastLocationUpdate: json['lastLocationUpdate'] != null
-          ? DateTime.parse(json['lastLocationUpdate'])
+          ? DateTime.parse(json['lastLocationUpdate'] as String)
           : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'vehicleNumber': vehicleNumber,
+      'routeName': routeName,
+      'driver': driver,
+      'capacity': capacity,
+      'status': status.name,
+      'currentLatitude': currentLatitude,
+      'currentLongitude': currentLongitude,
+      'lastLocationUpdate': lastLocationUpdate?.toIso8601String(),
+    };
   }
 }
