@@ -1,9 +1,5 @@
 package io.github.bardiakz.user.service;
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
+
 import io.github.bardiakz.user.dto.UserProfileCreateRequest;
 import io.github.bardiakz.user.dto.UserProfileResponse;
 import io.github.bardiakz.user.entity.UserProfile;
@@ -25,8 +21,8 @@ public class UserProfileService {
         }
 
         UserProfile profile = new UserProfile();
-        profile.setId(request.getId());
         profile.setEmail(request.getEmail());
+        profile.setUsername(request.getUsername());
         profile.setRole(request.getRole());
         profile.setFullName(request.getFullName());
         profile.setStudentNumber(request.getStudentNumber());

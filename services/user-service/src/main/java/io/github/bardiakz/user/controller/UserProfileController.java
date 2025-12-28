@@ -2,7 +2,7 @@ package io.github.bardiakz.user.controller;
 
 import io.github.bardiakz.user.dto.UserProfileCreateRequest;
 import io.github.bardiakz.user.dto.UserProfileResponse;
-import io.github.bardiakz.user.entity.UserProfile;
+import io.github.bardiakz.user.entity.UserProfile;  
 import io.github.bardiakz.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,14 +1,11 @@
+package io.github.bardiakz.user.entity;
+import io.github.bardiakz.user.entity.Role;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import io.github.bardiakz.user.entity.UserProfile;
-import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -26,10 +23,9 @@ public class User implements UserDetails {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    private Role role;  // Enum: STUDENT, PROFESSOR, ADMIN
+    private Role role;  // Enum: STUDENT, INSTRUCTOR, FACULTY
 
-    // For multi-tenancy
-    private Long tenantId;  // e.g., faculty ID
+    private Long tenantId;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -41,7 +37,6 @@ public class User implements UserDetails {
         return email;
     }
 
-    // Other UserDetails methods: return true for non-expired, etc.
     @Override public boolean isAccountNonExpired() { return true; }
     @Override public boolean isAccountNonLocked() { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }
