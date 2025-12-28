@@ -1,5 +1,9 @@
 package io.github.bardiakz.user.service;
-
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
 import io.github.bardiakz.user.dto.UserProfileCreateRequest;
 import io.github.bardiakz.user.dto.UserProfileResponse;
 import io.github.bardiakz.user.entity.UserProfile;

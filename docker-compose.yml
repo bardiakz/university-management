@@ -88,8 +88,8 @@ services:
     networks:
       - microservices-network
 
-  # User Service
-    postgres-user:
+  # user postgres
+  postgres-user:
     image: postgres:16
     container_name: postgres-user
     restart: always
@@ -106,7 +106,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+#user service
   user-service:
     build: ./services/user-service
     container_name: user-service
@@ -116,8 +116,6 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       postgres-user:
-        condition: service_healthy
-      rabbitmq-broker:
         condition: service_healthy
     restart: unless-stopped
 
@@ -197,4 +195,7 @@ networks:
 
 volumes:
   postgres_data:
-  
+  postgres-main-data:
+  postgres-user-data:
+  rabbitmq-data:
+  redis-data:

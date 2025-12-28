@@ -3,7 +3,12 @@ import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import io.github.bardiakz.user.entity.UserProfile;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
 import java.util.Collection;
 import java.util.List;
 
