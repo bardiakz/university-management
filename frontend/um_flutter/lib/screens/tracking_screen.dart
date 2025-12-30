@@ -381,12 +381,14 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                   location: shuttle,
                   isFaculty: isFaculty,
                   onStatusChanged: _refreshList,
+                  onLocationUpdate: _refreshList,
                 );
               } else if (shuttle is Shuttle) {
                 return _ShuttleCard(
                   shuttle: shuttle,
                   isFaculty: isFaculty,
                   onStatusChanged: _refreshList,
+                  onLocationUpdate: _refreshList,
                 );
               }
               return const SizedBox.shrink();
@@ -607,11 +609,13 @@ class _ShuttleLocationCard extends ConsumerWidget {
   final ShuttleLocation location;
   final bool isFaculty;
   final VoidCallback onStatusChanged;
+  final VoidCallback onLocationUpdate;
 
   const _ShuttleLocationCard({
     required this.location,
     required this.isFaculty,
     required this.onStatusChanged,
+    required this.onLocationUpdate,
   });
 
   Color _getStatusColor() {
@@ -627,71 +631,345 @@ class _ShuttleLocationCard extends ConsumerWidget {
     }
   }
 
+  IconData _getStatusIcon() {
+    switch (location.status) {
+      case ShuttleStatus.ACTIVE:
+        return Icons.check_circle;
+      case ShuttleStatus.INACTIVE:
+        return Icons.pause_circle;
+      case ShuttleStatus.MAINTENANCE:
+        return Icons.build_circle;
+      case ShuttleStatus.OUT_OF_SERVICE:
+        return Icons.cancel;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statusColor = _getStatusColor();
+    final statusIcon = _getStatusIcon();
 
     return Card(
+      elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.directions_bus, color: statusColor, size: 32),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        location.routeName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+      child: InkWell(
+        onTap: () => _showDetails(context, ref),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.directions_bus,
+                      color: statusColor,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          location.routeName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
-                      Text(location.vehicleNumber),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          '${location.vehicleNumber} (ID: ${location.shuttleId})',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
+                  if (isFaculty)
+                    PopupMenuButton<String>(
+                      onSelected: (value) => _handleAction(context, ref, value),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'update_location',
+                          child: Row(
+                            children: [
+                              Icon(Icons.my_location),
+                              SizedBox(width: 8),
+                              Text('Update Location'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        const PopupMenuItem(
+                          value: 'active',
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.green),
+                              SizedBox(width: 8),
+                              Text('Set Active'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'inactive',
+                          child: Row(
+                            children: [
+                              Icon(Icons.pause_circle, color: Colors.grey),
+                              SizedBox(width: 8),
+                              Text('Set Inactive'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'maintenance',
+                          child: Row(
+                            children: [
+                              Icon(Icons.build_circle, color: Colors.orange),
+                              SizedBox(width: 8),
+                              Text('Set Maintenance'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(statusIcon, size: 16, color: statusColor),
+                  const SizedBox(width: 4),
+                  Text(
                     location.status.name,
                     style: TextStyle(
                       color: statusColor,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w500,
                       fontSize: 12,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.location_on, size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  '${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)}',
-                  style: const TextStyle(fontSize: 11),
-                ),
-              ],
-            ),
-          ],
+                  const Spacer(),
+                  if (location.lastUpdate != null)
+                    Text(
+                      _formatDateTime(location.lastUpdate!),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    size: 14,
+                    color: Colors.grey.shade500,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  void _showDetails(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(location.vehicleNumber),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _DetailRow(label: 'ID', value: location.shuttleId.toString()),
+            _DetailRow(label: 'Route', value: location.routeName),
+            _DetailRow(label: 'Status', value: location.status.name),
+            const Divider(),
+            _DetailRow(
+              label: 'Latitude',
+              value: location.latitude.toStringAsFixed(6),
+            ),
+            _DetailRow(
+              label: 'Longitude',
+              value: location.longitude.toStringAsFixed(6),
+            ),
+            if (location.lastUpdate != null)
+              _DetailRow(
+                label: 'Last Update',
+                value: DateFormat('MMM dd, yyyy HH:mm:ss')
+                    .format(location.lastUpdate!),
+              ),
+          ],
+        ),
+        actions: [
+          if (isFaculty)
+            TextButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                _showUpdateLocationDialog(context, ref);
+              },
+              icon: const Icon(Icons.my_location),
+              label: const Text('Update Location'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUpdateLocationDialog(BuildContext context, WidgetRef ref) {
+    final latController =
+        TextEditingController(text: location.latitude.toString());
+    final lngController =
+        TextEditingController(text: location.longitude.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Update Location'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: latController,
+              decoration: const InputDecoration(
+                labelText: 'Latitude',
+                hintText: 'e.g., 40.7128',
+              ),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: lngController,
+              decoration: const InputDecoration(
+                labelText: 'Longitude',
+                hintText: 'e.g., -74.0060',
+              ),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                final lat = double.parse(latController.text);
+                final lng = double.parse(lngController.text);
+
+                final trackingService = ref.read(trackingServiceProvider);
+                await trackingService.updateShuttleLocation(
+                  shuttleId: location.shuttleId,
+                  latitude: lat,
+                  longitude: lng,
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Location updated successfully')),
+                  );
+                  onLocationUpdate();
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
+                }
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleAction(BuildContext context, WidgetRef ref, String action) async {
+    if (action == 'update_location') {
+      _showUpdateLocationDialog(context, ref);
+      return;
+    }
+
+    ShuttleStatus newStatus;
+    switch (action) {
+      case 'active':
+        newStatus = ShuttleStatus.ACTIVE;
+        break;
+      case 'inactive':
+        newStatus = ShuttleStatus.INACTIVE;
+        break;
+      case 'maintenance':
+        newStatus = ShuttleStatus.MAINTENANCE;
+        break;
+      default:
+        return;
+    }
+
+    try {
+      final trackingService = ref.read(trackingServiceProvider);
+      await trackingService.updateShuttleStatus(location.shuttleId, newStatus);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Shuttle status updated to ${newStatus.name}')),
+        );
+        onStatusChanged();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  String _formatDateTime(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      return DateFormat('MMM dd, HH:mm').format(date);
+    }
   }
 }
 
@@ -699,29 +977,282 @@ class _ShuttleCard extends ConsumerWidget {
   final Shuttle shuttle;
   final bool isFaculty;
   final VoidCallback onStatusChanged;
+  final VoidCallback onLocationUpdate;
 
   const _ShuttleCard({
     required this.shuttle,
     required this.isFaculty,
     required this.onStatusChanged,
+    required this.onLocationUpdate,
   });
+
+  Color _getStatusColor() {
+    switch (shuttle.status) {
+      case ShuttleStatus.ACTIVE:
+        return Colors.green;
+      case ShuttleStatus.INACTIVE:
+        return Colors.grey;
+      case ShuttleStatus.MAINTENANCE:
+        return Colors.orange;
+      case ShuttleStatus.OUT_OF_SERVICE:
+        return Colors.red;
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final statusColor = _getStatusColor();
+    final hasLocation =
+        shuttle.currentLatitude != null && shuttle.currentLongitude != null;
+
     return Card(
+      elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              shuttle.routeName,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child:
+                      Icon(Icons.directions_bus, color: statusColor, size: 32),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        shuttle.routeName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${shuttle.vehicleNumber} (ID: ${shuttle.id})',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    shuttle.status.name,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                if (isFaculty)
+                  PopupMenuButton<String>(
+                    onSelected: (value) => _handleAction(context, ref, value),
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'update_location',
+                        child: Row(
+                          children: [
+                            Icon(Icons.my_location),
+                            SizedBox(width: 8),
+                            Text('Update Location'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(value: 'active', child: Text('Set Active')),
+                      const PopupMenuItem(
+                          value: 'inactive', child: Text('Set Inactive')),
+                      const PopupMenuItem(
+                          value: 'maintenance', child: Text('Set Maintenance')),
+                    ],
+                  ),
+              ],
             ),
-            Text(shuttle.vehicleNumber),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.people, size: 16, color: Colors.grey.shade500),
+                const SizedBox(width: 4),
+                Text(
+                  'Capacity: ${shuttle.capacity}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                if (shuttle.driver != null) ...[
+                  const SizedBox(width: 16),
+                  Icon(Icons.person, size: 16, color: Colors.grey.shade500),
+                  const SizedBox(width: 4),
+                  Text(
+                    shuttle.driver!,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ],
+              ],
+            ),
+            if (hasLocation) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    size: 14,
+                    color: Colors.grey.shade500,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${shuttle.currentLatitude!.toStringAsFixed(4)}, ${shuttle.currentLongitude!.toStringAsFixed(4)}',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ] else ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_off,
+                    size: 14,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'No location data',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  void _handleAction(BuildContext context, WidgetRef ref, String action) async {
+    if (action == 'update_location') {
+      _showUpdateLocationDialog(context, ref);
+      return;
+    }
+
+    ShuttleStatus newStatus;
+    switch (action) {
+      case 'active':
+        newStatus = ShuttleStatus.ACTIVE;
+        break;
+      case 'inactive':
+        newStatus = ShuttleStatus.INACTIVE;
+        break;
+      case 'maintenance':
+        newStatus = ShuttleStatus.MAINTENANCE;
+        break;
+      default:
+        return;
+    }
+
+    try {
+      final trackingService = ref.read(trackingServiceProvider);
+      await trackingService.updateShuttleStatus(shuttle.id, newStatus);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Shuttle status updated to ${newStatus.name}')),
+        );
+        onStatusChanged();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  void _showUpdateLocationDialog(BuildContext context, WidgetRef ref) {
+    final latController = TextEditingController(
+      text: shuttle.currentLatitude?.toString() ?? '40.7128',
+    );
+    final lngController = TextEditingController(
+      text: shuttle.currentLongitude?.toString() ?? '-74.0060',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Update Location'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: latController,
+              decoration: const InputDecoration(labelText: 'Latitude'),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: lngController,
+              decoration: const InputDecoration(labelText: 'Longitude'),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                final lat = double.parse(latController.text);
+                final lng = double.parse(lngController.text);
+
+                final trackingService = ref.read(trackingServiceProvider);
+                await trackingService.updateShuttleLocation(
+                  shuttleId: shuttle.id,
+                  latitude: lat,
+                  longitude: lng,
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Location updated successfully')),
+                  );
+                  onLocationUpdate();
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: ${e.toString()}')),
+                  );
+                }
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
       ),
     );
   }
