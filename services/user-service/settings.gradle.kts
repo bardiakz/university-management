@@ -1,4 +1,4 @@
-rootProject.name = "auth-service"
+rootProject.name = "user-service"
 
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"

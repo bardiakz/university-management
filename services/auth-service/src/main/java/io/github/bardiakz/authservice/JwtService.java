@@ -64,12 +64,11 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-
+        // Add email if available
         if (userDetails instanceof User) {
             User user = (User) userDetails;
-            claims.put("role", user.getRole().toString());
+            claims.put("email", user.getEmail());
         }
-
         return createToken(claims, userDetails.getUsername());
     }
 
