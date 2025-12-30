@@ -107,6 +107,28 @@ services:
     networks:
       - microservices-network
 
+  # User Service
+  user-service:
+    build: ./services/user-service
+    container_name: user-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_URL=jdbc:postgresql://postgres:5432/userdb
+      - DB_USERNAME=user_service_user
+      - DB_PASSWORD=user_service_pass
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=admin
+      - RABBITMQ_PASSWORD=admin
+      - INTERNAL_API_SECRET=${INTERNAL_API_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
   # Resource Service
   resource-service:
     build: ./services/resource-service

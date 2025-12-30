@@ -1,3 +1,11 @@
+-- Create the userdb database
+CREATE DATABASE userdb;
+CREATE USER user_service_user WITH PASSWORD 'user_service_pass';
+GRANT ALL PRIVILEGES ON DATABASE userdb TO user_service_user;
+
+\c userdb;
+GRANT ALL ON SCHEMA public TO user_service_user;
+
 -- Create the authdb database
 CREATE DATABASE authdb;
 CREATE USER auth_user WITH PASSWORD 'auth_pass';

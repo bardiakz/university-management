@@ -27,7 +27,7 @@ public class UserProfileService {
         profile.setFullName(request.getFullName());
         profile.setStudentNumber(request.getStudentNumber());
         profile.setPhoneNumber(request.getPhoneNumber());
-        profile.setTenantId(request.getTenantId());
+        profile.setTenantId(request.getTenantId() != null ? request.getTenantId() : 1L);
 
         UserProfile saved = repository.save(profile);
 
