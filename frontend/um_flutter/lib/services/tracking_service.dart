@@ -142,4 +142,43 @@ class TrackingService {
       throw NetworkException('Error updating shuttle status: ${e.toString()}');
     }
   }
+
+  /// Update shuttle location - simulates GPS update
+  Future<ShuttleLocation> updateShuttleLocation({
+    required int shuttleId,
+    required double latitude,
+    required double longitude,
+    double? speed,
+    double? heading,
+    double? accuracy,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${ApiService.baseUrl}/api/tracking/location'),
+            headers: _getHeaders(),
+            body: jsonEncode({
+              'shuttleId': shuttleId,
+              'latitude': latitude,
+              'longitude': longitude,
+              'speed': speed ?? 25.0,
+              'heading': heading ?? 0.0,
+              'accuracy': accuracy ?? 5.0,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return ShuttleLocation.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 401) {
+        throw AuthException('Unauthorized');
+      } else {
+        final error = jsonDecode(response.body);
+        throw ServerException(error['error'] ?? 'Failed to update location');
+      }
+    } catch (e) {
+      if (e is AuthException || e is ServerException) rethrow;
+      throw NetworkException('Error updating location: ${e.toString()}');
+    }
+  }
 }
