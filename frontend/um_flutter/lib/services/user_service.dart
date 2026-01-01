@@ -68,19 +68,18 @@ class UserService {
     }
   }
 
-  /// Update the current user's profile
   Future<UserProfile> updateMyProfile({
+    String? email,
     String? fullName,
     String? studentNumber,
     String? phoneNumber,
-    String? email,
   }) async {
     try {
       final body = <String, dynamic>{};
+      if (email != null) body['email'] = email;
       if (fullName != null) body['fullName'] = fullName;
       if (studentNumber != null) body['studentNumber'] = studentNumber;
       if (phoneNumber != null) body['phoneNumber'] = phoneNumber;
-      if (phoneNumber != null) body['email'] = email;
 
       final response = await http
           .put(

@@ -100,7 +100,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   }
 }
 
-// ==================== User Profile Provider ====================
+// ==================== User Profile Provider (WITH RETRY LOGIC) ====================
 final userProfileProvider = FutureProvider.autoDispose<UserProfile?>((
   ref,
 ) async {
@@ -111,14 +111,41 @@ final userProfileProvider = FutureProvider.autoDispose<UserProfile?>((
     return null;
   }
 
-  try {
-    final userService = ref.read(userServiceProvider);
-    return await userService.getMyProfile();
-  } catch (e) {
-    print('Error loading user profile: $e');
-    // Return null instead of throwing - profile might not exist yet
-    return null;
+  final userService = ref.read(userServiceProvider);
+
+  // Retry logic for newly registered users
+  // Profile creation is event-driven and may take a moment
+  int retries = 5;
+  int delayMs = 500;
+
+  for (int i = 0; i < retries; i++) {
+    try {
+      return await userService.getMyProfile();
+    } catch (e) {
+      if (e.toString().contains('Profile not found') && i < retries - 1) {
+        // Profile doesn't exist yet, wait and retry
+        print(
+          'Profile not found, retrying in ${delayMs}ms... (attempt ${i + 1}/$retries)',
+        );
+        await Future.delayed(Duration(milliseconds: delayMs));
+        delayMs = (delayMs * 1.5).toInt(); // Exponential backoff
+        continue;
+      }
+
+      // If it's the last retry or a different error, handle gracefully
+      if (e.toString().contains('Profile not found')) {
+        print(
+          'Profile not found after $retries attempts - user may need to contact support',
+        );
+        return null;
+      }
+
+      print('Error loading user profile: $e');
+      return null;
+    }
   }
+
+  return null;
 });
 
 // ==================== Combined User Info Provider ====================

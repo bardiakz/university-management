@@ -54,7 +54,16 @@ public class GatewayConfig {
                         )
                         .uri(authServiceUrl))
 
-                // User Service - Protected
+                // User Profile Service - Protected
+                .route("user-profiles", r -> r
+                        .path("/api/profiles/**")
+                        .filters(f -> f
+                                .filter(jwtFilter.apply(new JwtAuthenticationFilter.Config()))
+                                .circuitBreaker(config -> config.setName("userServiceCircuitBreaker"))
+                        )
+                        .uri(userServiceUrl))
+
+                // User Service - Protected (kept for backwards compatibility)
                 .route("user-service", r -> r
                         .path("/api/users/**")
                         .filters(f -> f

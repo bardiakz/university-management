@@ -100,9 +100,15 @@ services:
       - DB_USERNAME=auth_user
       - DB_PASSWORD=auth_pass
       - JWT_SECRET=${JWT_SECRET}
-      - INTERNAL_API_SECRET=gateway-to-services-secret-123
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=admin
+      - RABBITMQ_PASSWORD=admin
+      - INTERNAL_API_SECRET=${INTERNAL_API_SECRET}
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - microservices-network
@@ -120,6 +126,7 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=admin
       - RABBITMQ_PASSWORD=admin
+      - JWT_SECRET=${JWT_SECRET} 
       - INTERNAL_API_SECRET=${INTERNAL_API_SECRET}
     depends_on:
       postgres:
