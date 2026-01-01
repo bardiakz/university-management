@@ -62,8 +62,9 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, String role) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
         // Add email if available
         if (userDetails instanceof User) {
             User user = (User) userDetails;

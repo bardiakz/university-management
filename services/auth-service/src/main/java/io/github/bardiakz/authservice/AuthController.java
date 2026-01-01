@@ -28,18 +28,21 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EventPublisher eventPublisher;
+    private final UserServiceClient userServiceClient;
 
     public AuthController(
             AuthenticationManager authenticationManager,
             JwtService jwtService,
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            EventPublisher eventPublisher) {
+            EventPublisher eventPublisher,
+            UserServiceClient userServiceClient) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
+        this.userServiceClient = userServiceClient;
     }
 
     @PostMapping("/login")
@@ -53,9 +56,13 @@ public class AuthController {
             );
 
             UserDetails userDetails = (UserDetails) auth.getPrincipal();
-            String jwt = jwtService.generateToken(userDetails);
+            
+            // Fetch role from user-service
+            String role = userServiceClient.getUserRole(request.username());
+            
+            String jwt = jwtService.generateToken(userDetails, role);
 
-            log.info("User {} logged in successfully", request.username());
+            log.info("User {} logged in successfully with role {}", request.username(), role);
             return ResponseEntity.ok(new LoginResponse(jwt, request.username()));
 
         } catch (AuthenticationException e) {

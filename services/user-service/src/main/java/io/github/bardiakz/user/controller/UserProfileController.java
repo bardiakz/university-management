@@ -46,6 +46,16 @@ public class UserProfileController {
         }
     }
 
+    @GetMapping("/internal/username/{username}")
+    public ResponseEntity<UserProfileResponse> getProfileByUsernameInternal(@PathVariable String username) {
+        try {
+            UserProfileResponse profile = service.getProfileByUsername(username);
+            return ResponseEntity.ok(profile);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
     /**
      * Update the current user's profile
      */
