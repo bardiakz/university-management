@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -69,6 +69,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       // Auto-login after registration
       await login(username, password);
     } catch (e) {
+      debugPrint('AuthNotifier.register error: $e');
       rethrow;
     }
   }
@@ -87,6 +88,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
 
       state = AsyncValue.data(user);
     } catch (e) {
+      debugPrint('AuthNotifier.login error: $e');
       state = AsyncValue.error(e, StackTrace.current);
       rethrow;
     }
@@ -124,7 +126,7 @@ final userProfileProvider = FutureProvider.autoDispose<UserProfile?>((
     } catch (e) {
       if (e.toString().contains('Profile not found') && i < retries - 1) {
         // Profile doesn't exist yet, wait and retry
-        print(
+        debugPrint(
           'Profile not found, retrying in ${delayMs}ms... (attempt ${i + 1}/$retries)',
         );
         await Future.delayed(Duration(milliseconds: delayMs));
@@ -134,13 +136,13 @@ final userProfileProvider = FutureProvider.autoDispose<UserProfile?>((
 
       // If it's the last retry or a different error, handle gracefully
       if (e.toString().contains('Profile not found')) {
-        print(
+        debugPrint(
           'Profile not found after $retries attempts - user may need to contact support',
         );
         return null;
       }
 
-      print('Error loading user profile: $e');
+      debugPrint('Error loading user profile: $e');
       return null;
     }
   }

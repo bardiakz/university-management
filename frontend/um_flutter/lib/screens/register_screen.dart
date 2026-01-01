@@ -54,9 +54,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        // AuthNotifier will auto-login and navigate
+        // Pop register screen to return to AuthWrapper logic
+        Navigator.of(context).pop();
       }
     } catch (e) {
+      debugPrint('Registration error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
