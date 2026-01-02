@@ -127,11 +127,14 @@ public class GatewayConfig {
                         .uri(notificationServiceUrl))
 
                 // IoT Service - Protected
+                // IoT Service - Protected
                 .route("iot-service", r -> r
                         .path("/api/iot/**", "/ws/iot/**")
                         .filters(f -> f
                                 .filter(jwtFilter.apply(new JwtAuthenticationFilter.Config()))
-                                .circuitBreaker(config -> config.setName("iotServiceCircuitBreaker"))
+                                .circuitBreaker(config -> config
+                                        .setName("iotServiceCircuitBreaker")
+                                        .setFallbackUri("forward:/fallback/iot"))
                         )
                         .uri(iotServiceUrl))
 

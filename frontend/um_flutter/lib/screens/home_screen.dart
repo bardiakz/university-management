@@ -11,6 +11,7 @@ import 'tracking_screen.dart';
 import 'my_payments_screen.dart';
 import 'profile_screen.dart';
 import 'placeholder_screen.dart';
+import 'iot_dashboard_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -219,12 +220,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ServicePlaceholderScreen(
-                      title: 'IoT Devices',
-                      icon: Icons.sensors,
-                      description:
-                          'View real-time sensor data from campus facilities.',
-                    ),
+                    builder: (context) => const IotDashboardScreen(),
                   ),
                 );
               },

@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/resource.dart';
 import '../models/booking.dart';
+import '../models/iot_sensor.dart';
+import '../models/sensor_reading.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -392,6 +394,80 @@ class ApiService {
     } catch (e) {
       if (e is AuthException || e is ServerException) rethrow;
       throw NetworkException('Error cancelling booking: ${e.toString()}');
+    }
+  }
+
+  // ==================== IoT APIs ====================
+  Future<List<IotSensor>> getSensors() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/api/iot/sensors'),
+            headers: _getHeaders(requiresAuth: true),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => IotSensor.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw AuthException('Unauthorized - please login again');
+      } else {
+        throw ServerException('Failed to load sensors');
+      }
+    } catch (e) {
+      if (e is AuthException || e is ServerException) rethrow;
+      throw NetworkException('Error loading sensors: ${e.toString()}');
+    }
+  }
+
+  Future<IotSensor> getSensor(String sensorId) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/api/iot/sensors/$sensorId'),
+            headers: _getHeaders(requiresAuth: true),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return IotSensor.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 401) {
+        throw AuthException('Unauthorized - please login again');
+      } else {
+        throw ServerException('Failed to load sensor details');
+      }
+    } catch (e) {
+      if (e is AuthException || e is ServerException) rethrow;
+      throw NetworkException('Error loading sensor details: ${e.toString()}');
+    }
+  }
+
+  Future<List<SensorReading>> getSensorReadings(
+    String sensorId, {
+    int limit = 50,
+  }) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(
+              '$baseUrl/api/iot/sensors/$sensorId/readings?limit=$limit',
+            ),
+            headers: _getHeaders(requiresAuth: true),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => SensorReading.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw AuthException('Unauthorized - please login again');
+      } else {
+        throw ServerException('Failed to load sensor readings');
+      }
+    } catch (e) {
+      if (e is AuthException || e is ServerException) rethrow;
+      throw NetworkException('Error loading sensor readings: ${e.toString()}');
     }
   }
 }

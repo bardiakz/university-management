@@ -9,6 +9,8 @@ import io.github.bardiakz.iot_service.repository.SensorReadingRepository;
 import io.github.bardiakz.iot_service.repository.SensorRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,14 +28,15 @@ public class SensorService {
     private final SimpMessagingTemplate messagingTemplate;
 
     public SensorService(SensorRepository sensorRepository,
-                        SensorReadingRepository readingRepository,
-                        SimpMessagingTemplate messagingTemplate) {
+                         SensorReadingRepository readingRepository,
+                         SimpMessagingTemplate messagingTemplate) {
         this.sensorRepository = sensorRepository;
         this.readingRepository = readingRepository;
         this.messagingTemplate = messagingTemplate;
     }
 
     @Transactional
+    @CacheEvict(value = "sensors", key = "#request.sensorId")
     public SensorDTO registerSensor(SensorRegisterRequest request) {
         if (sensorRepository.findBySensorId(request.getSensorId()).isPresent()) {
             throw new RuntimeException("Sensor already exists: " + request.getSensorId());
@@ -52,8 +55,7 @@ public class SensorService {
 
     @Transactional
     public void recordReading(String sensorId, Double value) {
-        Sensor sensor = sensorRepository.findBySensorId(sensorId)
-                .orElseThrow(() -> new RuntimeException("Sensor not found: " + sensorId));
+        Sensor sensor = findSensorCached(sensorId);
 
         SensorReading reading = new SensorReading();
         reading.setSensorId(sensorId);
@@ -64,11 +66,17 @@ public class SensorService {
 
         // Broadcast to WebSocket clients
         SensorReadingDTO dto = new SensorReadingDTO(
-            sensorId, value, reading.getTimestamp(), sensor.getUnit()
+                sensorId, value, reading.getTimestamp(), sensor.getUnit()
         );
         messagingTemplate.convertAndSend("/topic/sensors/" + sensorId, dto);
 
         log.info("Recorded reading for sensor {}: {} {}", sensorId, value, sensor.getUnit());
+    }
+
+    @Cacheable(value = "sensors", key = "#sensorId")
+    public Sensor findSensorCached(String sensorId) {
+        return sensorRepository.findBySensorId(sensorId)
+                .orElseThrow(() -> new RuntimeException("Sensor not found: " + sensorId));
     }
 
     public List<SensorDTO> getAllSensors() {
@@ -78,14 +86,12 @@ public class SensorService {
     }
 
     public SensorDTO getSensor(String sensorId) {
-        Sensor sensor = sensorRepository.findBySensorId(sensorId)
-                .orElseThrow(() -> new RuntimeException("Sensor not found"));
+        Sensor sensor = findSensorCached(sensorId);
         return mapToDTO(sensor);
     }
 
     public List<SensorReadingDTO> getRecentReadings(String sensorId, int limit) {
-        Sensor sensor = sensorRepository.findBySensorId(sensorId)
-                .orElseThrow(() -> new RuntimeException("Sensor not found"));
+        Sensor sensor = findSensorCached(sensorId);
 
         return readingRepository.findRecentBySensorId(sensorId, limit).stream()
                 .map(r -> new SensorReadingDTO(r.getSensorId(), r.getValue(), r.getTimestamp(), sensor.getUnit()))
