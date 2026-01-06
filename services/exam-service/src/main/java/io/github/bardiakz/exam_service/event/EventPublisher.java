@@ -30,7 +30,7 @@ public class EventPublisher {
         try {
             String eventJson = objectMapper.writeValueAsString(event);
             rabbitTemplate.convertAndSend(exchangeName, examStartedRoutingKey, eventJson);
-            log.info("Published ExamStartedEvent for exam ID: {}", event.getExamId());
+            log.info("Published ExamStartedEvent for exam ID: {}", event.examId());
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize ExamStartedEvent: {}", e.getMessage(), e);
         } catch (Exception e) {

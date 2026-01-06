@@ -25,9 +25,9 @@ public class NotificationService {
      */
     @CircuitBreaker(name = "notificationService", fallbackMethod = "notifyExamStartFallback")
     public void notifyExamStart(ExamStartedEvent event) {
-        log.info("Attempting to send exam start notification for exam ID: {}", event.getExamId());
+        log.info("Attempting to send exam start notification for exam ID: {}", event.examId());
         eventPublisher.publishExamStartedEvent(event);
-        log.info("Successfully sent exam start notification for exam ID: {}", event.getExamId());
+        log.info("Successfully sent exam start notification for exam ID: {}", event.examId());
     }
 
     /**
@@ -39,9 +39,9 @@ public class NotificationService {
      */
     private void notifyExamStartFallback(ExamStartedEvent event, Throwable throwable) {
         log.warn("Circuit breaker OPEN or notification failed for exam ID: {}. Fallback triggered. Reason: {}",
-                event.getExamId(), throwable.getMessage());
+                event.examId(), throwable.getMessage());
         log.info("Exam {} will proceed without notification. Notification will be retried when service recovers.",
-                event.getExamId());
+                event.examId());
 
         // In production, you might want to:
         // 1. Store failed notifications in a database for retry

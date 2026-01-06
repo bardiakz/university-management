@@ -41,7 +41,7 @@ dependencies {
     // Circuit Breaker (Resilience4j)
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
     implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.2.0")
-    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("org.springframework.boot:spring-boot-starter-aspectj")
 
     // Jackson for JSON
     implementation("com.fasterxml.jackson.core:jackson-databind")
@@ -51,6 +51,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.amqp:spring-rabbit-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    testImplementation("com.h2database:h2")
 }
 
 tasks.withType<Test> {
