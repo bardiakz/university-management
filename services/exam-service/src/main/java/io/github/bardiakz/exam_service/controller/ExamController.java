@@ -4,8 +4,8 @@ import io.github.bardiakz.exam_service.dto.ExamRequest;
 import io.github.bardiakz.exam_service.dto.ExamResponse;
 import io.github.bardiakz.exam_service.service.ExamService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,11 +17,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/exams")
-@RequiredArgsConstructor
-@Slf4j
 public class ExamController {
+    private static final Logger log = LoggerFactory.getLogger(ExamController.class);
 
     private final ExamService examService;
+
+    public ExamController(ExamService examService) {
+        this.examService = examService;
+    }
 
     @PostMapping
     @PreAuthorize("hasRole('INSTRUCTOR')")

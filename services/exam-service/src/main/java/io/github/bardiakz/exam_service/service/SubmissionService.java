@@ -5,8 +5,8 @@ import io.github.bardiakz.exam_service.entity.*;
 import io.github.bardiakz.exam_service.exception.ExamNotFoundException;
 import io.github.bardiakz.exam_service.repository.ExamRepository;
 import io.github.bardiakz.exam_service.repository.SubmissionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,9 +15,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class SubmissionService {
+    private static final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
     private final SubmissionRepository submissionRepository;
     private final ExamRepository examRepository;

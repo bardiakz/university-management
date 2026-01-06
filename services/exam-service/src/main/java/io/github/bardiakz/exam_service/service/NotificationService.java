@@ -3,16 +3,19 @@ package io.github.bardiakz.exam_service.service;
 import io.github.bardiakz.exam_service.event.EventPublisher;
 import io.github.bardiakz.exam_service.event.ExamStartedEvent;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class NotificationService {
+    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
     private final EventPublisher eventPublisher;
+
+    public NotificationService(EventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
 
     /**
      * Sends exam start notification with Circuit Breaker pattern.

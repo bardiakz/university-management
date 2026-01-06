@@ -1,15 +1,9 @@
 package io.github.bardiakz.exam_service.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "answers")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Answer {
 
     @Id

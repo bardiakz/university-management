@@ -1,19 +1,12 @@
 package io.github.bardiakz.exam_service.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "exams")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Exam {
 
     @Id
