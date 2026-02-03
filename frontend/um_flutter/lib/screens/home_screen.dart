@@ -1,8 +1,8 @@
-// ==================== screens/home_screen.dart (UPDATED) ====================
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/resource.dart';
 import '../providers/app_providers.dart';
+import '../widgets/notification_badge.dart';
 import 'add_resource_screen.dart';
 import 'my_bookings_screen.dart';
 import 'create_booking_screen.dart';
@@ -12,6 +12,7 @@ import 'my_payments_screen.dart';
 import 'profile_screen.dart';
 import 'placeholder_screen.dart';
 import 'iot_dashboard_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -31,6 +32,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: const Text('Resources'),
         actions: [
+          // Notification Badge with unread count
+          NotificationBadge(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
           PopupMenuButton<String>(
             icon: const Icon(Icons.account_circle),
             itemBuilder: (context) => [
@@ -240,19 +253,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.notifications),
+              leading: const NotificationIcon(),
               title: const Text('Notifications'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ServicePlaceholderScreen(
-                      title: 'Notifications',
-                      icon: Icons.notifications,
-                      description:
-                          'Stay updated with university announcements.',
-                    ),
+                    builder: (context) => const NotificationsScreen(),
                   ),
                 );
               },
