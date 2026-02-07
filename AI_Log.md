@@ -737,3 +737,57 @@ Microservices  Stay stateless and trust Gateway
 Redis  Stores blacklisted tokens
 Saga Pattern  Internal events bypass JWT; external calls are secured at the edge
 ---
+
+**Question:**
+```
+Why did we choose a Microservice architecture for this project, and how did AI help in this decision?
+```
+
+**Response:**
+
+AI played a key role in evaluating the architectural options by analyzing both functional and non-functional requirements of the system. Given the need for high scalability, fault tolerance, independent service deployment, and support for multi-tenancy, AI demonstrated that a monolithic architecture would introduce tight coupling and scalability bottlenecks. It explained how a Microservice architecture enables loose coupling between services, independent scaling, and better fault isolation. Additionally, AI provided real-world examples related to university systems, such as peak loads during course registration and resource booking, showing how horizontal scaling and stateless services can effectively handle such scenarios. This guidance helped the team make an informed architectural decision and clearly document the rationale behind choosing Microservices.
+
+---
+
+**Question:**
+```
+How did AI assist the team in understanding and implementing the Saga pattern?
+```
+
+**Response:**
+
+The Saga pattern was one of the most conceptually challenging aspects of the project due to the absence of distributed transactions in Microservice architectures. AI helped the team by first breaking down the concept of Saga into simple, understandable steps using the marketplace purchase workflow as a concrete example. It explained how each local transaction (such as order creation, inventory reduction, and payment confirmation) should be handled independently, and how compensating transactions are used to maintain consistency in case of failure. AI also compared Saga orchestration and choreography approaches, outlining the advantages and trade-offs of each. Based on this analysis, the team selected an orchestration-based Saga to maintain better control and observability over the transaction flow, which significantly improved the correctness and reliability of the final implementation.
+
+---
+
+**Question:**
+```
+What role did AI play in deciding where to apply the Circuit Breaker pattern?
+```
+
+**Response:**
+
+AI assisted the team in identifying system components where failures could propagate and negatively impact overall system stability. By analyzing service dependencies, AI highlighted that the communication between the Exam service and the Notification service was a high-risk interaction point. It explained that while notifications are important, their failure should not prevent students from taking exams. AI recommended applying the Circuit Breaker pattern in this interaction to prevent repeated failed calls and cascading failures. This decision ensured that when the Notification service becomes unavailable, the Exam service can continue functioning normally. As a result, the system achieved higher resilience and better compliance with the project’s reliability requirements.
+
+---
+
+**Question:**
+```
+How was AI used during the documentation phase of the project?
+```
+
+**Response:**
+
+During the documentation phase, AI acted as a technical writing assistant and architectural reviewer. It helped generate initial drafts for API documentation, including detailed endpoint descriptions, request and response formats, and authentication requirements. Additionally, AI supported the creation of Architecture Decision Records (ADRs) by structuring the reasoning behind major design decisions such as adopting RabbitMQ for event-driven communication and selecting a specific multi-tenancy strategy. These drafts provided a strong starting point for the team, who then reviewed, refined, and aligned the documentation with the actual implementation. This process improved documentation quality and ensured clarity and consistency across the project.
+
+---
+
+**Question:**
+```
+What was the most significant benefit of using AI during the development of this project?
+```
+
+**Response:**
+
+The most significant benefit of using AI was having continuous access to a knowledgeable technical mentor throughout the project lifecycle. AI accelerated the team’s learning curve by explaining advanced architectural concepts, validating design decisions, and assisting in problem-solving at both conceptual and implementation levels. It enabled the team to explore alternative solutions, understand trade-offs, and avoid common design pitfalls. Importantly, AI did not replace the team’s reasoning or creativity; instead, it enhanced critical thinking and supported a deeper understanding of distributed system design. This mentorship role had a direct positive impact on the quality of the architecture, implementation, and documentation.
+---
