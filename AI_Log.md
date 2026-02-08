@@ -739,8 +739,10 @@ Saga Pattern  Internal events bypass JWT; external calls are secured at the edge
 ---
 The User-Service
 ---
+
 **Question:**
 How does the separation of authentication logic (auth-service) from profile management (user-service) align with Domain-Driven Design's Bounded Context principle, and what are the main trade-offs when compared to a monolithic user module?
+
 **Answer:**
 The separation of authentication logic (handled by the auth-service) from profile management (handled by the user-service) is a deliberate architectural choice that aligns well with Domain-Driven Design's (DDD) Bounded Context principle, while also reflecting the broader goals of microservices architecture in your project. Below is a structured, academic-style analysis of this alignment and the main trade-offs compared to a monolithic user module.
 In Domain-Driven Design (Evans, 2003), a Bounded Context is an explicit boundary within which a particular domain model is defined and consistent. It ensures that a concept (e.g., "User") has a single, unambiguous meaning inside that boundary and avoids the "big ball of mud" that arises when the same term carries multiple conflicting meanings across the system.
@@ -758,8 +760,10 @@ The frontend acts as an Anti-Corruption Layer (ACL) by orchestrating the two con
 The eventual goal (as discussed earlier) of using events (UserRegistered → create profile) would introduce an Open Host Service / Published Language relationship or even a Conformist relationship, further clarifying the mapping between contexts.
 The current separated design is strongly aligned with DDD's Bounded Context principle: it gives each subdomain (authentication vs academic profile) its own consistent language and invariants, reducing ambiguity and cognitive load. This choice is particularly appropriate for a university platform where identity (security, login) and academic identity (student records, faculty affiliation, multi-tenancy) are naturally distinct subdomains with different change rates, access patterns, and stakeholders.
 Compared to a monolithic user module, the separated approach trades short-term simplicity and strong consistency for long-term scalability, fault isolation, independent evolvability, and better domain modeling — all of which are explicitly required or strongly implied by your project’s non-negotiable architectural constraints (loosely coupled microservices, Saga, Circuit Breaker, event-driven communication).
+
 **Question:**
 In a distributed registration flow spanning two services, how can full traceability be ensured (e.g., linking the auth registration to the profile creation)?
+
 **Answer:**
 In a distributed registration flow spanning two services (auth-service for identity creation and user-service for profile management), ensuring full traceability — i.e., reliably linking the authentication event to the subsequent profile creation — is essential for observability, debugging, auditability, and compliance with non-functional requirements such as maintainability (NFR-MN01) and security (NFR-SE01). Below is a comprehensive, academically grounded discussion of how to achieve this in the context of your microservices-based university management platform.
 Core Challenge in Distributed Flows
@@ -809,4 +813,5 @@ Benefits:
 Naturally idempotent and traceable
 Supports audit trails (event log = history)
 Aligns with Saga/Choreography requirement
+
 ---
