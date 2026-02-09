@@ -1865,3 +1865,39 @@ This keeps the IoT simulator stable even when many virtual sensors send data at 
 
 
 ---
+---
+
+## Payment Service Design – AI Consultation
+
+### Question 1: Saga Participation and Event Communication
+
+**Context:**  
+While designing the Payment Service, I was deciding how it should participate in a distributed transaction without directly calling other services.
+
+**Question:**  
+I was designing the Payment Service and wanted to understand how it should react to an order creation in a microservices architecture.  
+How can the Payment Service process a payment and notify other services about the result without introducing tight coupling?
+
+**AI Answer:**  
+The Payment Service should participate in the Saga pattern using the choreography approach.  
+It should listen for an `OrderCreated` event via a message broker such as RabbitMQ.  
+After processing the payment, the service should publish either a `PaymentCompleted` or `PaymentFailed` event.  
+Other services can then react to these events independently, which keeps the system loosely coupled and more resilient to failures.
+
+---
+
+### Question 2: Payment API Design and Reliability
+
+**Context:**  
+During the implementation of the Payment Service, I needed to design a reliable REST API that could safely handle payment requests in a distributed system.
+
+**Question:**  
+While implementing the Payment Service API, I asked how the payment endpoint should be designed to ensure security, validation, and protection against duplicate payments.
+
+**AI Answer:**  
+The Payment Service should expose a REST endpoint such as `POST /payments` with strict input validation and JWT-based authentication.  
+To prevent duplicate payments, the service should ensure idempotency by checking whether a payment already exists for a given orderId.  
+Centralized exception handling and clear success or failure responses help make the API reliable and suitable for a microservices environment.
+
+---
+
