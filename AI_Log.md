@@ -741,46 +741,270 @@ Saga Pattern  Internal events bypass JWT; external calls are secured at the edge
 
 **Question:**
 ```
-How can I design a product management system for the Marketplace service?
+How should order creation be designed to work with other microservices like Payment and Notification?
 ```
 
 **Response:**
-To design a product management system for the Marketplace service:
+Design order creation as a Saga (choreography) where Marketplace is the “starter” of the workflow, and other services react via events. The key is: Marketplace owns the Order state, while Payment owns payment processing, and Notification owns messaging—they coordinate only through events (plus optional query APIs).
 
-Create a Product Service: This service will handle the creation, updating, deletion, and retrieval of products. 
+Recommended flow (Saga choreography)
+1) Marketplace creates the Order (local transaction)
 
-Use a Database: Store product information like name, price, category, and description in a database (such as PostgreSQL). 
+Validate request, compute totals, reserve/decrement inventory (if Marketplace owns stock).
 
-Implement CRUD Operations: Create endpoints for Create (POST), Read (GET), Update (PUT), and Delete (DELETE) operations for products. 
+Persist Order with status like PAYMENT_PENDING (or CREATED then immediately PAYMENT_PENDING).
 
-Use Validation: Ensure that the data sent by the user is valid, e.g., check if price is positive and required fields are present. ✅
+Write an outbox event in the same DB transaction:
 
-Implement Searching and Filtering: Allow users to search and filter products by name, category, or price. 🔍
+OrderCreated (or PaymentRequested—either name is fine, just be consistent)
 
-Implement Searching and Filtering: Allow users to search and filter products by name, category, or price.
+2) Publish the event (Outbox relay)
+
+A background publisher reads outbox_events and publishes to RabbitMQ.
+
+This guarantees: either both (DB + event) happen, or neither.
+
+3) Payment reacts
+
+Payment Service consumes OrderCreated / PaymentRequested.
+
+Processes payment with provider.
+
+Publishes either:
+
+PaymentCompleted { orderId, paymentId, amount }
+
+PaymentFailed { orderId, reason }
+
+4) Marketplace finalizes the Order (compensation-aware)
+
+Marketplace consumes PaymentCompleted/PaymentFailed.
+
+Update Order.status:
+
+PAID (or CONFIRMED) on completed
+
+PAYMENT_FAILED (or CANCELLED) on failed
+
+If payment failed and you reserved stock: perform compensation (release/restore stock) inside Marketplace.
+
+5) Notification reacts (no direct coupling)
+
+Notification consumes events and sends emails:
+
+OrderCreated → “We received your order”
+
+PaymentCompleted → “Payment successful”
+
+PaymentFailed → “Payment failed”
+
+Notification should be idempotent and resilient (retry + DLQ).
+
+Event contract essentials (what makes this work reliably)
+
+Every event should include:
+
+eventId (UUID) → dedupe/idempotency
+
+eventType + version (e.g., PaymentCompleted.v1)
+
+orderId
+
+occurredAt
+
+correlationId (trace a saga across services)
+
+Optional: causationId (links this event to the triggering event)
+
+Routing keys example
+
+order.created
+
+payment.completed
+
+payment.failed
+
+Idempotency rules (must-have in microservices)
+
+Because RabbitMQ can deliver duplicates (and retries exist):
+
+Payment: if it already processed eventId or orderId+attempt, don’t charge again.
+
+Marketplace: if order already PAID, ignore repeated PaymentCompleted.
+
+Notification: don’t send the same email twice → store processed eventIds.
+
+Implement with a small table like processed_events(event_id PK, processed_at) per service.
+
+Failure handling & consistency
+
+Use retry with exponential backoff for transient failures.
+
+Use DLQ for poison messages; add a replay tool/process.
+
+Marketplace order statuses should be a simple state machine:
+
+PAYMENT_PENDING → PAID OR PAYMENT_FAILED
+
+(Optional) PAID → FULFILLED (if you have shipping/booking/etc.)
+
+Practical “minimum viable” design
+
+If you need the simplest correct design for a course project:
+
+Marketplace: createOrder() writes Order + outbox OrderCreated
+
+Outbox publisher sends order.created
+
+Payment consumes and replies with payment.completed or payment.failed
+
+Marketplace consumes and updates order + compensates stock
+
+Notification consumes both and emails
+
+This matches the Saga choreography model described in your README (OrderCreated → PaymentCompleted/Failed → Notification reacts).
+
+If you want, I can also give you:
+
+exact event JSON schemas (v1),
+
+RabbitMQ exchange/queue/binding layout,
+
+and a clean Spring Boot implementation with Outbox + listeners + idempotency tables.
 ---
 
 **Question:**
 ```
-What should be the best practice for securing user authentication in the Marketplace service? 🔒
+How can the Marketplace service safely trust user identity without handling authentication logic itself?
 ```
 
 **Response:**
-To secure user authentication:
+Use the API Gateway + JWT + internal identity propagation pattern: Marketplace never authenticates users itself; it only trusts requests that come through the Gateway, and it uses the verified identity/roles the Gateway forwards.
 
-Use JWT (JSON Web Tokens) for user authentication. 🔑
+1) Put authentication where it belongs: Gateway + Auth service
 
-Create an Auth Service: This service will handle login and token generation. 
+Auth Service issues JWTs.
 
-Token-Based Authentication: After the user logs in, generate a JWT containing the user’s identity and roles, then send this token to the user.
+API Gateway validates JWT on every request (signature, expiry, blacklist, etc.).
 
-JWT Validation: The API Gateway will validate the JWT in each request to ensure the user is authorized to access specific resources. 
+If valid, Gateway forwards the request to Marketplace; if not, it blocks it.
 
-Encrypt User Data: Store passwords securely using hash algorithms like bcrypt or PBKDF2. 🔐
+This matches your architecture: “JWT validation at API Gateway” and “RBAC enforcement per operation.” 
 
-Use HTTPS: Ensure all communication between the client and server is encrypted using HTTPS to prevent data interception. 🌐
+README
 
-Implement Searching and Filtering: Allow users to search and filter products by name, category, or price.
+2) Forward trusted identity to Marketplace (don’t re-parse JWT there)
+Option A (recommended): Forward signed “internal headers”
+
+Gateway injects headers like:
+
+X-User-Id: <uuid>
+
+X-Roles: STUDENT,ADMIN
+
+X-Correlation-Id: ...
+
+Critical rule: Marketplace must only accept these headers if the request is coming from the Gateway (see section 3).
+
+Why this is good:
+
+Marketplace stays simple.
+
+No JWT libraries/config in every service.
+
+RBAC can be enforced either at Gateway or additionally in Marketplace.
+
+Option B: Marketplace verifies JWT too (defense-in-depth)
+
+Gateway validates JWT, but Marketplace also verifies JWT signature using the same public key/JWKS.
+
+More secure against misrouting/bypass,
+
+More repeated work/config.
+
+In many course projects, A is enough if you also prevent bypass.
+
+3) Prevent bypass: make sure Marketplace only receives traffic from the Gateway
+
+This is the real “trust” problem. Enforce at least one of these:
+
+Network-level (best)
+
+Marketplace is not publicly reachable.
+
+Only Gateway is exposed.
+
+Use Docker network / Kubernetes Service + NetworkPolicy / firewall.
+
+Service-level (still good)
+
+Add one of:
+
+mTLS between Gateway and services (strong)
+
+An internal service token header added by Gateway:
+
+X-Internal-Token: <shared-secret or signed token>
+
+Marketplace validates it.
+
+Or validate that the caller is Gateway via known client cert / IP allowlist (weaker than mTLS but ok in labs).
+
+If you don’t do this, anyone could call Marketplace directly and forge X-User-Id.
+
+4) RBAC inside Marketplace: keep it minimal but correct
+
+Even if Gateway enforces RBAC, it’s common to also enforce “business authorization” in Marketplace, e.g.:
+
+A user can only view their own orders unless role is ADMIN.
+
+A user can only cancel an order in certain states.
+
+Implementation pattern:
+
+Read X-User-Id and X-Roles.
+
+Use them to scope queries and operations.
+
+Also: never trust userId from request body for identity-sensitive actions.
+
+Example: in POST /orders, ignore userId in body; take user id from header/Principal.
+
+5) Propagate identity into events (so other services can act)
+
+When Marketplace publishes OrderCreated, include:
+
+userId (from trusted identity)
+
+correlationId
+So Notification can send email and other services can trace the saga.
+
+Minimal implementation sketch (Spring)
+
+In Marketplace:
+
+A filter/interceptor reads X-User-Id and X-Roles (and optionally validates X-Internal-Token).
+
+Store it in a request-scoped context (or use Spring Security with a pre-auth token).
+
+And in controllers/services:
+
+UUID userId = RequestContext.userId();
+
+Authorize based on roles.
+
+Bottom line
+
+Marketplace can safely trust user identity without doing auth by:
+
+forcing all requests through the Gateway (network isolation),
+
+having Gateway validate JWT and inject trusted identity headers,
+
+optionally adding mTLS or an internal signed token so headers can’t be forged,
+
+enforcing only business-level authorization inside Marketplace.
+---
 **Question:**
 How should we consume messages from RabbitMQ in the Notification Service? Should we use @RabbitListener, or is there another method to do this?
 **Response:**
