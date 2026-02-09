@@ -19,6 +19,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("SELECT e FROM Exam e WHERE e.startTime <= :now AND e.endTime >= :now AND e.status = 'ACTIVE'")
     List<Exam> findActiveExams(@Param("now") LocalDateTime now);
 
+    @Query("SELECT e FROM Exam e WHERE e.startTime <= :now AND e.endTime >= :now AND e.status = 'SCHEDULED'")
+    List<Exam> findScheduledExamsToActivate(@Param("now") LocalDateTime now);
+
     @Query("SELECT e FROM Exam e WHERE e.startTime > :now AND e.status = 'SCHEDULED'")
     List<Exam> findUpcomingExams(@Param("now") LocalDateTime now);
 }

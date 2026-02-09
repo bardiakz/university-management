@@ -140,6 +140,16 @@ public class GatewayConfig {
                         )
                         .uri(examServiceUrl))
 
+                // Exam Submissions - Protected (same service)
+                .route("exam-submissions", r -> r
+                        .path("/api/submissions/**")
+                        .filters(f -> f
+                                .addRequestHeader("X-Internal-Secret", internalApiSecret)
+                                .filter(jwtFilter.apply(new JwtAuthenticationFilter.Config()))
+                                .circuitBreaker(config -> config.setName("examServiceCircuitBreaker"))
+                        )
+                        .uri(examServiceUrl))
+
                 // Notification Service - Protected with Internal API Secret
                 .route("notification-service", r -> r
                         .path("/api/notifications/**")

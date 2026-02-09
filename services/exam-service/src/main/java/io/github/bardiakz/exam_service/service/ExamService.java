@@ -92,12 +92,14 @@ public class ExamService {
         return mapToExamResponse(saved);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ExamResponse getExamById(Long examId, String userId, String role) {
         log.info("Fetching exam ID: {} for user {} with role {}", examId, userId, role);
 
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new ExamNotFoundException("Exam not found with ID: " + examId));
+
+        maybeActivateExam(exam, LocalDateTime.now());
 
         // Instructors can see their own exams, students can see published exams
         if (role.equals("INSTRUCTOR") && !exam.getInstructorId().equals(userId)) {
@@ -120,10 +122,12 @@ public class ExamService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ExamResponse> getActiveExams() {
         log.info("Fetching all active exams");
-        return examRepository.findActiveExams(LocalDateTime.now())
+        LocalDateTime now = LocalDateTime.now();
+        activateScheduledExams(now);
+        return examRepository.findActiveExams(now)
                 .stream()
                 .map(this::mapToExamResponse)
                 .collect(Collectors.toList());
@@ -144,6 +148,24 @@ public class ExamService {
         }
         if (startTime.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Start time must be in the future");
+        }
+    }
+
+    private void activateScheduledExams(LocalDateTime now) {
+        List<Exam> toActivate = examRepository.findScheduledExamsToActivate(now);
+        if (toActivate.isEmpty()) {
+            return;
+        }
+        toActivate.forEach(exam -> exam.setStatus(Exam.ExamStatus.ACTIVE));
+        examRepository.saveAll(toActivate);
+    }
+
+    private void maybeActivateExam(Exam exam, LocalDateTime now) {
+        if (exam.getStatus() == Exam.ExamStatus.SCHEDULED
+                && !exam.getStartTime().isAfter(now)
+                && !exam.getEndTime().isBefore(now)) {
+            exam.setStatus(Exam.ExamStatus.ACTIVE);
+            examRepository.save(exam);
         }
     }
 

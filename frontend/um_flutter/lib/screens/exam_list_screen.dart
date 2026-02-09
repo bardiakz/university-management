@@ -5,6 +5,7 @@ import '../models/exam.dart';
 import '../providers/app_providers.dart';
 import '../providers/exam_providers.dart';
 import 'add_edit_exam_screen.dart';
+import 'take_exam_screen.dart';
 
 class ExamListScreen extends ConsumerWidget {
   const ExamListScreen({super.key});
@@ -19,6 +20,20 @@ class ExamListScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(isInstructor ? 'My Exams' : 'Online Exams'),
+          actions: [
+            IconButton(
+              onPressed: () {
+                if (isInstructor) {
+                  ref.invalidate(myExamsProvider);
+                } else {
+                  ref.invalidate(activeExamsProvider);
+                  ref.invalidate(upcomingExamsProvider);
+                }
+              },
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh exams',
+            ),
+          ],
           bottom: isInstructor
               ? null
               : const TabBar(
@@ -69,13 +84,19 @@ class _InstructorExamList extends ConsumerWidget {
             child: Text('No exams created yet. Tap + to create one.'),
           );
         }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: exams.length,
-          itemBuilder: (context, index) {
-            final exam = exams[index];
-            return _ExamCard(exam: exam, isInstructor: true);
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(myExamsProvider);
+            await ref.read(myExamsProvider.future);
           },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: exams.length,
+            itemBuilder: (context, index) {
+              final exam = exams[index];
+              return _ExamCard(exam: exam, isInstructor: true);
+            },
+          ),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -96,12 +117,18 @@ class _ActiveExamsList extends ConsumerWidget {
     return examsAsync.when(
       data: (exams) {
         if (exams.isEmpty) return const Center(child: Text('No active exams.'));
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: exams.length,
-          itemBuilder: (context, index) {
-            return _ExamCard(exam: exams[index], isInstructor: false);
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(activeExamsProvider);
+            await ref.read(activeExamsProvider.future);
           },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: exams.length,
+            itemBuilder: (context, index) {
+              return _ExamCard(exam: exams[index], isInstructor: false);
+            },
+          ),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -122,12 +149,18 @@ class _UpcomingExamsList extends ConsumerWidget {
         if (exams.isEmpty) {
           return const Center(child: Text('No upcoming exams.'));
         }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: exams.length,
-          itemBuilder: (context, index) {
-            return _ExamCard(exam: exams[index], isInstructor: false);
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(upcomingExamsProvider);
+            await ref.read(upcomingExamsProvider.future);
           },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: exams.length,
+            itemBuilder: (context, index) {
+              return _ExamCard(exam: exams[index], isInstructor: false);
+            },
+          ),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -242,6 +275,31 @@ class _ExamCard extends ConsumerWidget {
                     }
                   },
                   child: const Text('Publish Exam'),
+                ),
+              ),
+            ],
+            if (!isInstructor && exam.status == ExamStatus.ACTIVE) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: exam.id == null
+                      ? null
+                      : () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TakeExamScreen(
+                                examId: exam.id!,
+                                title: exam.title,
+                              ),
+                            ),
+                          );
+                          if (result == true) {
+                            ref.invalidate(activeExamsProvider);
+                          }
+                        },
+                  child: const Text('Take Exam'),
                 ),
               ),
             ],

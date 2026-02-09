@@ -176,4 +176,40 @@ class ExamService {
       throw NetworkException('Error publishing exam: ${e.toString()}');
     }
   }
+
+  Future<void> submitExam(int examId, Map<int, String> answers) async {
+    final payload = {
+      'examId': examId,
+      'answers': answers.entries
+          .map(
+            (entry) => {
+              'questionId': entry.key,
+              'answerText': entry.value,
+            },
+          )
+          .toList(),
+    };
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${ApiService.baseUrl}/api/submissions'),
+            headers: _getHeaders(),
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 201) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw AuthException('Unauthorized');
+      } else {
+        final error = jsonDecode(response.body);
+        throw ServerException(error['error'] ?? 'Failed to submit exam');
+      }
+    } catch (e) {
+      if (e is AuthException || e is ServerException) rethrow;
+      throw NetworkException('Error submitting exam: ${e.toString()}');
+    }
+  }
 }
