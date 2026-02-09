@@ -5,8 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
-import java.util.HashMap;
-import java.util.Map;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Component
 public class PaymentEventPublisher {
@@ -25,16 +26,17 @@ public class PaymentEventPublisher {
      * Marketplace will listen and mark order as COMPLETED
      */
     public void publishPaymentCompleted(Payment payment) {
-        Map<String, Object> event = new HashMap<>();
-        event.put("eventType", "PaymentCompleted");
-        event.put("paymentId", payment.getId());
-        event.put("orderId", payment.getOrderId());
-        event.put("userId", payment.getUserId());
-        event.put("amount", payment.getAmount());
-        event.put("transactionId", payment.getTransactionId());
-        event.put("timestamp", System.currentTimeMillis());
-
         try {
+            PaymentCompletedEvent event = new PaymentCompletedEvent();
+            event.setEventId(UUID.randomUUID().toString());
+            event.setPaymentId(payment.getId());
+            event.setOrderId(payment.getOrderId());
+            event.setUserId(payment.getUserId());
+            event.setUserEmail(payment.getUserId() + "@university.edu"); // Construct email
+            event.setAmount(payment.getAmount());
+            event.setTransactionId(payment.getTransactionId());
+            event.setTimestamp(LocalDateTime.now());
+
             rabbitTemplate.convertAndSend(EXCHANGE_NAME, "payment.completed", event);
             log.info("Published PaymentCompleted event for order: {}", payment.getOrderId());
         } catch (Exception e) {
@@ -47,16 +49,15 @@ public class PaymentEventPublisher {
      * Marketplace will listen and restore stock (C1)
      */
     public void publishPaymentFailed(Payment payment) {
-        Map<String, Object> event = new HashMap<>();
-        event.put("eventType", "PaymentFailed");
-        event.put("paymentId", payment.getId());
-        event.put("orderId", payment.getOrderId());
-        event.put("userId", payment.getUserId());
-        event.put("amount", payment.getAmount());
-        event.put("reason", payment.getFailureReason());
-        event.put("timestamp", System.currentTimeMillis());
-
         try {
+            PaymentFailedEvent event = new PaymentFailedEvent();
+            event.setEventId(UUID.randomUUID().toString());
+            event.setOrderId(payment.getOrderId());
+            event.setUserId(payment.getUserId());
+            event.setUserEmail(payment.getUserId() + "@university.edu"); // Construct email
+            event.setReason(payment.getFailureReason());
+            event.setTimestamp(LocalDateTime.now());
+
             rabbitTemplate.convertAndSend(EXCHANGE_NAME, "payment.failed", event);
             log.info("Published PaymentFailed event for order: {} - Triggering compensation",
                     payment.getOrderId());
