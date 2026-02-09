@@ -64,15 +64,24 @@ class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Check for internal API secret
+        String authHeader = request.getHeader("Authorization");
+
+        // Internal API access should only apply when no user JWT is present.
         String internalSecret = request.getHeader("X-Internal-Secret");
-        if (internalSecret != null && internalSecret.equals(internalApiSecret)) {
+        if ((authHeader == null || !authHeader.startsWith("Bearer "))
+                && internalSecret != null
+                && internalSecret.equals(internalApiSecret)) {
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            "internal-service",
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_INTERNAL"))
+                    );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             log.debug("Internal API call authenticated");
             filterChain.doFilter(request, response);
             return;
         }
-
-        String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.debug("No valid Authorization header found");

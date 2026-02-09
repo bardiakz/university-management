@@ -373,7 +373,7 @@ class _QuestionDialogState extends State<QuestionDialog> {
       _text = widget.initialQuestion!.text;
       _type = widget.initialQuestion!.type;
       _marks = widget.initialQuestion!.marks;
-      _correctAnswer = widget.initialQuestion!.correctAnswer;
+      _correctAnswer = widget.initialQuestion!.correctAnswer!;
       _options.addAll(widget.initialQuestion!.options);
     } else {
       _text = '';

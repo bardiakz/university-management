@@ -1,55 +1,36 @@
 package io.github.bardiakz.exam_service.config;
 
-import org.springframework.amqp.core.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class RabbitMQConfig {
 
-    @Value("${rabbitmq.exchange.name}")
-    private String exchangeName;
-
-    @Value("${rabbitmq.queue.exam.started}")
-    private String examStartedQueue;
-
-    @Value("${rabbitmq.routing.key.exam.started}")
-    private String examStartedRoutingKey;
+    public static final String EXAM_EXCHANGE = "exam.exchange";
 
     @Bean
-    public TopicExchange exchange() {
-        return new TopicExchange(exchangeName);
+    public TopicExchange examExchange() {
+        return new TopicExchange(EXAM_EXCHANGE);
     }
 
     @Bean
-    public Queue examStartedQueue() {
-        return QueueBuilder.durable(examStartedQueue)
-                .withArgument("x-dead-letter-exchange", exchangeName + ".dlx")
-                .build();
+    @Primary
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
     }
 
     @Bean
-    public Binding examStartedBinding(Queue examStartedQueue, TopicExchange exchange) {
-        return BindingBuilder
-                .bind(examStartedQueue)
-                .to(exchange)
-                .with(examStartedRoutingKey);
-    }
-
-    @Bean
-    public JacksonJsonMessageConverter messageConverter() {
-        return new JacksonJsonMessageConverter();
-    }
-
-    @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
-                                         JacksonJsonMessageConverter messageConverter) {
-        RabbitTemplate template = new RabbitTemplate(connectionFactory);
-        template.setMessageConverter(messageConverter);
-        return template;
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        return new RabbitTemplate(connectionFactory);
     }
 }

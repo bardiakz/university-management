@@ -7,7 +7,7 @@ class Question {
   final String text;
   final QuestionType type;
   final List<String> options;
-  final String correctAnswer;
+  final String? correctAnswer;
   final int marks;
   final int orderNumber;
 
