@@ -185,7 +185,7 @@ public class ExamService {
                 question.getId(),
                 question.getText(),
                 question.getType(),
-                question.getOptions(),
+                question.getOptions() == null ? Collections.emptyList() : List.copyOf(question.getOptions()),
                 question.getCorrectAnswer(),
                 question.getMarks(),
                 question.getOrderNumber()
