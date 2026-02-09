@@ -139,7 +139,7 @@ public class NotificationService {
     @Transactional
     public NotificationResponse createFromTemplate(String templateName, String recipientEmail,
                                                    NotificationType type, Map<String, String> variables,
-                                                   Long userId) {
+                                                   String userId) {
         try {
             EmailTemplate template;
 
@@ -234,7 +234,7 @@ public class NotificationService {
     /**
      * Get notifications by user ID
      */
-    public List<NotificationResponse> getNotificationsByUserId(Long userId) {
+    public List<NotificationResponse> getNotificationsByUserId(String userId) {
         return notificationRepository.findByUserId(userId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());

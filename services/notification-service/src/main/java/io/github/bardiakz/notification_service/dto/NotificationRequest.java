@@ -20,7 +20,7 @@ public class NotificationRequest {
     @NotNull(message = "Notification type is required")
     private NotificationType type;
 
-    private Long userId;
+    private String userId;  // Changed from Long to String
 
     public NotificationRequest() {
     }
@@ -64,11 +64,11 @@ public class NotificationRequest {
         this.type = type;
     }
 
-    public Long getUserId() {
+    public String getUserId() {  // Changed from Long to String
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {  // Changed from Long to String
         this.userId = userId;
     }
 }

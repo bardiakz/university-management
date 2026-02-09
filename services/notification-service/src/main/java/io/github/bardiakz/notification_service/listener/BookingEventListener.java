@@ -41,7 +41,7 @@ public class BookingEventListener {
                     event.getUserEmail(),
                     NotificationType.BOOKING_CONFIRMATION,
                     variables,
-                    event.getUserId()
+                    event.getUserId() // Now returns String, not Long
             );
 
             logger.info("Booking confirmation email sent to: {}", event.getUserEmail());
@@ -66,7 +66,7 @@ public class BookingEventListener {
                     event.getUserEmail(),
                     NotificationType.BOOKING_CANCELLATION,
                     variables,
-                    event.getUserId()
+                    event.getUserId() // Now returns String, not Long
             );
 
             logger.info("Booking cancellation email sent to: {}", event.getUserEmail());

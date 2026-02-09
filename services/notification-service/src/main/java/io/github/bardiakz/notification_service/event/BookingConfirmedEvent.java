@@ -12,7 +12,7 @@ public class BookingConfirmedEvent {
     private Long bookingId;
 
     @JsonProperty("userId")
-    private Long userId;
+    private String userId;
 
     @JsonProperty("userEmail")
     private String userEmail;
@@ -52,13 +52,8 @@ public class BookingConfirmedEvent {
         this.bookingId = bookingId;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 
     public String getUserEmail() {
         return userEmail;

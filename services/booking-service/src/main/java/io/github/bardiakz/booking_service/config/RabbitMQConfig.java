@@ -11,46 +11,20 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    // Booking events exchange
+    // Booking events exchange (only declare the exchange - no queues/bindings needed here)
     public static final String BOOKING_EXCHANGE = "booking.events";
-    public static final String BOOKING_CONFIRMED_QUEUE = "booking.confirmed.queue";
-    public static final String BOOKING_CANCELLED_QUEUE = "booking.cancelled.queue";
 
     // Listen to Resource Service events
     public static final String RESOURCE_EXCHANGE = "resource.events";
     public static final String BOOKING_RESOURCE_STATUS_QUEUE = "booking.resource.status.queue";
 
-    // Booking Exchange
+    // Only declare the exchange used for publishing (optional but harmless)
     @Bean
     public TopicExchange bookingExchange() {
         return new TopicExchange(BOOKING_EXCHANGE);
     }
 
-    @Bean
-    public Queue bookingConfirmedQueue() {
-        return new Queue(BOOKING_CONFIRMED_QUEUE, true);
-    }
-
-    @Bean
-    public Queue bookingCancelledQueue() {
-        return new Queue(BOOKING_CANCELLED_QUEUE, true);
-    }
-
-    @Bean
-    public Binding bookingConfirmedBinding(Queue bookingConfirmedQueue, TopicExchange bookingExchange) {
-        return BindingBuilder.bind(bookingConfirmedQueue)
-                .to(bookingExchange)
-                .with("booking.confirmed");
-    }
-
-    @Bean
-    public Binding bookingCancelledBinding(Queue bookingCancelledQueue, TopicExchange bookingExchange) {
-        return BindingBuilder.bind(bookingCancelledQueue)
-                .to(bookingExchange)
-                .with("booking.cancelled");
-    }
-
-    // Resource Exchange (listen to Resource Service)
+    // Resource Exchange (listen to Resource Service) - KEEP THESE
     @Bean
     public TopicExchange resourceExchange() {
         return new TopicExchange(RESOURCE_EXCHANGE);

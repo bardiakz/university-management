@@ -1,7 +1,6 @@
 package io.github.bardiakz.notification_service.config;
 
 import org.springframework.amqp.core.*;
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
@@ -64,26 +63,17 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queue.exam.graded}")
     private String examGradedQueue;
 
+    // ==================== MESSAGE CONVERTER & TEMPLATE ====================
     @Bean
-    public JacksonJsonMessageConverter messageConverter() {
+    public MessageConverter jsonMessageConverter() {
         return new JacksonJsonMessageConverter();
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
-                                         JacksonJsonMessageConverter messageConverter) {
-        RabbitTemplate template = new RabbitTemplate(connectionFactory);
-        template.setMessageConverter(messageConverter);
-        return template;
-    }
-
-    @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
-            ConnectionFactory connectionFactory) {
-        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
-        factory.setMessageConverter(messageConverter());
-        return factory;
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(messageConverter);
+        return rabbitTemplate;
     }
 
     // ==================== USER EXCHANGE ====================
@@ -98,9 +88,9 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding userRegisteredBinding() {
-        return BindingBuilder.bind(userRegisteredQueue())
-                .to(userExchange())
+    public Binding userRegisteredBinding(Queue userRegisteredQueue, TopicExchange userExchange) {
+        return BindingBuilder.bind(userRegisteredQueue)
+                .to(userExchange)
                 .with("user.registered");
     }
 
@@ -121,16 +111,16 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding bookingConfirmedBinding() {
-        return BindingBuilder.bind(bookingConfirmedQueue())
-                .to(bookingExchange())
+    public Binding bookingConfirmedBinding(Queue bookingConfirmedQueue, TopicExchange bookingExchange) {
+        return BindingBuilder.bind(bookingConfirmedQueue)
+                .to(bookingExchange)
                 .with("booking.confirmed");
     }
 
     @Bean
-    public Binding bookingCancelledBinding() {
-        return BindingBuilder.bind(bookingCancelledQueue())
-                .to(bookingExchange())
+    public Binding bookingCancelledBinding(Queue bookingCancelledQueue, TopicExchange bookingExchange) {
+        return BindingBuilder.bind(bookingCancelledQueue)
+                .to(bookingExchange)
                 .with("booking.cancelled");
     }
 
@@ -146,9 +136,9 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding orderCreatedBinding() {
-        return BindingBuilder.bind(orderCreatedQueue())
-                .to(marketplaceExchange())
+    public Binding orderCreatedBinding(Queue orderCreatedQueue, TopicExchange marketplaceExchange) {
+        return BindingBuilder.bind(orderCreatedQueue)
+                .to(marketplaceExchange)
                 .with("order.created");
     }
 
@@ -169,16 +159,16 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding paymentCompletedBinding() {
-        return BindingBuilder.bind(paymentCompletedQueue())
-                .to(paymentExchange())
+    public Binding paymentCompletedBinding(Queue paymentCompletedQueue, TopicExchange paymentExchange) {
+        return BindingBuilder.bind(paymentCompletedQueue)
+                .to(paymentExchange)
                 .with("payment.completed");
     }
 
     @Bean
-    public Binding paymentFailedBinding() {
-        return BindingBuilder.bind(paymentFailedQueue())
-                .to(paymentExchange())
+    public Binding paymentFailedBinding(Queue paymentFailedQueue, TopicExchange paymentExchange) {
+        return BindingBuilder.bind(paymentFailedQueue)
+                .to(paymentExchange)
                 .with("payment.failed");
     }
 
@@ -204,23 +194,23 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding examCreatedBinding() {
-        return BindingBuilder.bind(examCreatedQueue())
-                .to(examExchange())
+    public Binding examCreatedBinding(Queue examCreatedQueue, TopicExchange examExchange) {
+        return BindingBuilder.bind(examCreatedQueue)
+                .to(examExchange)
                 .with("exam.created");
     }
 
     @Bean
-    public Binding examSubmittedBinding() {
-        return BindingBuilder.bind(examSubmittedQueue())
-                .to(examExchange())
+    public Binding examSubmittedBinding(Queue examSubmittedQueue, TopicExchange examExchange) {
+        return BindingBuilder.bind(examSubmittedQueue)
+                .to(examExchange)
                 .with("exam.submitted");
     }
 
     @Bean
-    public Binding examGradedBinding() {
-        return BindingBuilder.bind(examGradedQueue())
-                .to(examExchange())
+    public Binding examGradedBinding(Queue examGradedQueue, TopicExchange examExchange) {
+        return BindingBuilder.bind(examGradedQueue)
+                .to(examExchange)
                 .with("exam.graded");
     }
 }

@@ -12,7 +12,7 @@ public class PaymentCompletedEvent {
     @JsonProperty("orderId")
     private Long orderId;
     @JsonProperty("userId")
-    private Long userId;
+    private String userId;  // Changed from Long to String
     @JsonProperty("userEmail")
     private String userEmail;
     @JsonProperty("amount")
@@ -30,8 +30,8 @@ public class PaymentCompletedEvent {
     public void setPaymentId(Long paymentId) { this.paymentId = paymentId; }
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public String getUserId() { return userId; }  // Changed from Long to String
+    public void setUserId(String userId) { this.userId = userId; }  // Changed from Long to String
     public String getUserEmail() { return userEmail; }
     public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
     public BigDecimal getAmount() { return amount; }

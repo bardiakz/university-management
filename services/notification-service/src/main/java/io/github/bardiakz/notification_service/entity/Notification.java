@@ -48,7 +48,7 @@ public class Notification {
     private String eventId;
 
     @Column(name = "user_id")
-    private Long userId;
+    private String userId;  // Changed from Long to String
 
     @PrePersist
     protected void onCreate() {
@@ -162,11 +162,11 @@ public class Notification {
         this.eventId = eventId;
     }
 
-    public Long getUserId() {
+    public String getUserId() {  // Changed from Long to String
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {  // Changed from Long to String
         this.userId = userId;
     }
 }

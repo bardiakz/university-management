@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Component
 public class BookingEventPublisher {
@@ -22,16 +22,18 @@ public class BookingEventPublisher {
     }
 
     public void publishBookingConfirmed(Booking booking) {
-        Map<String, Object> event = new HashMap<>();
-        event.put("eventType", "BookingConfirmed");
-        event.put("bookingId", booking.getId());
-        event.put("resourceId", booking.getResourceId());
-        event.put("userId", booking.getUserId());
-        event.put("startTime", booking.getStartTime().toString());
-        event.put("endTime", booking.getEndTime().toString());
-        event.put("timestamp", System.currentTimeMillis());
-
         try {
+            BookingConfirmedEvent event = new BookingConfirmedEvent();
+            event.setEventId(UUID.randomUUID().toString());
+            event.setBookingId(booking.getId());
+            event.setResourceId(booking.getResourceId());
+            event.setResourceName("Resource #" + booking.getResourceId()); // TODO: Get actual name
+            event.setUserId(booking.getUserId());
+            event.setUserEmail(booking.getUserId() + "@university.edu"); // Construct email
+            event.setStartTime(booking.getStartTime());
+            event.setEndTime(booking.getEndTime());
+            event.setTimestamp(LocalDateTime.now());
+
             rabbitTemplate.convertAndSend(EXCHANGE_NAME, "booking.confirmed", event);
             log.info("Published BookingConfirmed event for booking ID: {}", booking.getId());
         } catch (Exception e) {
@@ -40,14 +42,15 @@ public class BookingEventPublisher {
     }
 
     public void publishBookingCancelled(Booking booking) {
-        Map<String, Object> event = new HashMap<>();
-        event.put("eventType", "BookingCancelled");
-        event.put("bookingId", booking.getId());
-        event.put("resourceId", booking.getResourceId());
-        event.put("userId", booking.getUserId());
-        event.put("timestamp", System.currentTimeMillis());
-
         try {
+            BookingCancelledEvent event = new BookingCancelledEvent();
+            event.setEventId(UUID.randomUUID().toString());
+            event.setBookingId(booking.getId());
+            event.setUserId(booking.getUserId());
+            event.setUserEmail(booking.getUserId() + "@university.edu"); // Construct email
+            event.setResourceName("Resource #" + booking.getResourceId());
+            event.setTimestamp(LocalDateTime.now());
+
             rabbitTemplate.convertAndSend(EXCHANGE_NAME, "booking.cancelled", event);
             log.info("Published BookingCancelled event for booking ID: {}", booking.getId());
         } catch (Exception e) {

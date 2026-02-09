@@ -12,7 +12,7 @@ public class UserRegisteredEvent {
     private String eventId;
 
     @JsonProperty("userId")
-    private Long userId;
+    private String userId;
 
     @JsonProperty("email")
     private String email;
@@ -29,7 +29,7 @@ public class UserRegisteredEvent {
     public UserRegisteredEvent() {
     }
 
-    public UserRegisteredEvent(String eventId, Long userId, String email, String firstName, String lastName, LocalDateTime timestamp) {
+    public UserRegisteredEvent(String eventId, String userId, String email, String firstName, String lastName, LocalDateTime timestamp) {
         this.eventId = eventId;
         this.userId = userId;
         this.email = email;
@@ -47,11 +47,11 @@ public class UserRegisteredEvent {
         this.eventId = eventId;
     }
 
-    public Long getUserId() {
+    public String getUserId() {  // Changed from Long to String
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {  // Changed from Long to String
         this.userId = userId;
     }
 
