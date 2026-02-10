@@ -5,6 +5,7 @@ import '../models/exam.dart';
 import '../providers/app_providers.dart';
 import '../providers/exam_providers.dart';
 import 'add_edit_exam_screen.dart';
+import 'exam_submissions_screen.dart';
 import 'take_exam_screen.dart';
 
 class ExamListScreen extends ConsumerWidget {
@@ -113,22 +114,36 @@ class _ActiveExamsList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final examsAsync = ref.watch(activeExamsProvider);
+    final submissionsAsync = ref.watch(mySubmissionsProvider);
 
     return examsAsync.when(
       data: (exams) {
-        if (exams.isEmpty) return const Center(child: Text('No active exams.'));
-        return RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(activeExamsProvider);
-            await ref.read(activeExamsProvider.future);
+        return submissionsAsync.when(
+          data: (submissions) {
+            final submittedIds = submissions.map((s) => s.examId).toSet();
+            final visibleExams = exams
+                .where((exam) => !submittedIds.contains(exam.id))
+                .toList();
+            if (visibleExams.isEmpty) {
+              return const Center(child: Text('No active exams.'));
+            }
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(activeExamsProvider);
+                ref.invalidate(mySubmissionsProvider);
+                await ref.read(activeExamsProvider.future);
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: visibleExams.length,
+                itemBuilder: (context, index) {
+                  return _ExamCard(exam: visibleExams[index], isInstructor: false);
+                },
+              ),
+            );
           },
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: exams.length,
-            itemBuilder: (context, index) {
-              return _ExamCard(exam: exams[index], isInstructor: false);
-            },
-          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => Center(child: Text('Error: $err')),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -275,6 +290,28 @@ class _ExamCard extends ConsumerWidget {
                     }
                   },
                   child: const Text('Publish Exam'),
+                ),
+              ),
+            ],
+            if (isInstructor && exam.status != ExamStatus.DRAFT) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: exam.id == null
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ExamSubmissionsScreen(
+                                examId: exam.id!,
+                                title: exam.title,
+                              ),
+                            ),
+                          );
+                        },
+                  child: const Text('View Submissions'),
                 ),
               ),
             ],

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/exam.dart';
+import '../models/submission.dart';
 import 'api_service.dart';
 
 class ExamService {
@@ -210,6 +211,52 @@ class ExamService {
     } catch (e) {
       if (e is AuthException || e is ServerException) rethrow;
       throw NetworkException('Error submitting exam: ${e.toString()}');
+    }
+  }
+
+  Future<List<Submission>> getMySubmissions() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${ApiService.baseUrl}/api/submissions/my-submissions'),
+            headers: _getHeaders(),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => Submission.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw AuthException('Unauthorized');
+      } else {
+        throw ServerException('Failed to load submissions');
+      }
+    } catch (e) {
+      if (e is AuthException || e is ServerException) rethrow;
+      throw NetworkException('Error loading submissions: ${e.toString()}');
+    }
+  }
+
+  Future<List<Submission>> getSubmissionsByExam(int examId) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${ApiService.baseUrl}/api/submissions/exam/$examId'),
+            headers: _getHeaders(),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => Submission.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw AuthException('Unauthorized');
+      } else {
+        throw ServerException('Failed to load submissions');
+      }
+    } catch (e) {
+      if (e is AuthException || e is ServerException) rethrow;
+      throw NetworkException('Error loading submissions: ${e.toString()}');
     }
   }
 }

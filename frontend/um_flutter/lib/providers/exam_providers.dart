@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exam.dart';
+import '../models/submission.dart';
 import '../services/exam_service.dart';
 import 'app_providers.dart';
 
@@ -37,4 +38,19 @@ final examDetailsProvider = FutureProvider.autoDispose.family<Exam, int>((
 ) async {
   final service = ref.read(examServiceProvider);
   return service.getExamById(id);
+});
+
+// Student submissions
+final mySubmissionsProvider = FutureProvider.autoDispose<List<Submission>>((
+  ref,
+) async {
+  final service = ref.read(examServiceProvider);
+  return service.getMySubmissions();
+});
+
+// Instructor submissions by exam
+final examSubmissionsProvider =
+    FutureProvider.autoDispose.family<List<Submission>, int>((ref, examId) {
+  final service = ref.read(examServiceProvider);
+  return service.getSubmissionsByExam(examId);
 });

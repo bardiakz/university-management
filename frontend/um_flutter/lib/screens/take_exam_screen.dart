@@ -42,6 +42,7 @@ class _TakeExamScreenState extends ConsumerState<TakeExamScreen> {
 
     try {
       await ref.read(examServiceProvider).submitExam(exam.id!, _answers);
+      ref.invalidate(mySubmissionsProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Exam submitted successfully.')),
@@ -103,6 +104,7 @@ class _TakeExamScreenState extends ConsumerState<TakeExamScreen> {
   @override
   Widget build(BuildContext context) {
     final examAsync = ref.watch(examDetailsProvider(widget.examId));
+    final submissionsAsync = ref.watch(mySubmissionsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -110,51 +112,65 @@ class _TakeExamScreenState extends ConsumerState<TakeExamScreen> {
       ),
       body: examAsync.when(
         data: (exam) {
-          if (exam.status != ExamStatus.ACTIVE) {
-            return const Center(child: Text('This exam is not active yet.'));
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: exam.questions.length + 1,
-            itemBuilder: (context, index) {
-              if (index == exam.questions.length) {
-                return Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _submitting ? null : () => _submit(exam),
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Submit Exam'),
-                    ),
-                  ),
+          return submissionsAsync.when(
+            data: (submissions) {
+              final alreadySubmitted =
+                  submissions.any((s) => s.examId == exam.id);
+              if (alreadySubmitted) {
+                return const Center(
+                  child: Text('You have already submitted this exam.'),
                 );
               }
-
-              final question = exam.questions[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Q${index + 1}: ${question.text}',
-                        style: Theme.of(context).textTheme.titleMedium,
+              if (exam.status != ExamStatus.ACTIVE) {
+                return const Center(child: Text('This exam is not active yet.'));
+              }
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: exam.questions.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == exam.questions.length) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _submitting ? null : () => _submit(exam),
+                          child: _submitting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Text('Submit Exam'),
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      _buildQuestion(question),
-                    ],
-                  ),
-                ),
+                    );
+                  }
+
+                  final question = exam.questions[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Q${index + 1}: ${question.text}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildQuestion(question),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               );
             },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Error: $err')),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
