@@ -1,7 +1,5 @@
 package io.github.bardiakz.exam_service.event;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -13,7 +11,6 @@ public class EventPublisher {
     private static final Logger log = LoggerFactory.getLogger(EventPublisher.class);
 
     private final RabbitTemplate rabbitTemplate;
-    private final ObjectMapper objectMapper;
 
     @Value("${rabbitmq.exchange.name}")
     private String exchangeName;
@@ -30,9 +27,8 @@ public class EventPublisher {
     @Value("${rabbitmq.routing.key.exam.graded}")
     private String examGradedRoutingKey;
 
-    public EventPublisher(RabbitTemplate rabbitTemplate, ObjectMapper objectMapper) {
+    public EventPublisher(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
-        this.objectMapper = objectMapper;
     }
 
     public void publishExamStartedEvent(ExamStartedEvent event) {
@@ -53,11 +49,8 @@ public class EventPublisher {
 
     private void publishEvent(String routingKey, Object event) {
         try {
-            String eventJson = objectMapper.writeValueAsString(event);
-            rabbitTemplate.convertAndSend(exchangeName, routingKey, eventJson);
+            rabbitTemplate.convertAndSend(exchangeName, routingKey, event);
             log.info("Published {} to key {}", event.getClass().getSimpleName(), routingKey);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize {}: {}", event.getClass().getSimpleName(), e.getMessage(), e);
         } catch (Exception e) {
             log.error("Failed to publish {}: {}", event.getClass().getSimpleName(), e.getMessage(), e);
         }

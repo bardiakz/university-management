@@ -63,9 +63,25 @@ public class ExamEventListener {
     public void handleExamSubmitted(ExamSubmittedEvent event) {
         logger.info("Received ExamSubmittedEvent for submission: {}", event.getSubmissionId());
 
-        // This could send a confirmation to the student
-        // For now, we'll just log it
-        logger.info("Exam submitted by: {}", event.getStudentEmail());
+        try {
+            Map<String, String> variables = Map.of(
+                    "examTitle", event.getExamTitle(),
+                    "submittedAt", event.getSubmittedAt().format(DATE_FORMATTER),
+                    "message", "Your submission has been received."
+            );
+
+            notificationService.createFromTemplate(
+                    "exam-submitted",
+                    event.getStudentEmail(),
+                    NotificationType.EXAM_SUBMITTED,
+                    variables,
+                    null
+            );
+
+            logger.info("Exam submitted notification created for: {}", event.getStudentEmail());
+        } catch (Exception e) {
+            logger.error("Failed to create exam submitted notification: {}", e.getMessage(), e);
+        }
     }
 
     @RabbitListener(queues = "${rabbitmq.queue.exam.graded}")
