@@ -5,9 +5,14 @@ A loosely coupled, event-driven microservices architecture implementing the Saga
 ## Architecture Overview
 
 ### Core Principles
-- **Database per Service**: Each microservice owns its dedicated PostgreSQL instance for true data isolation
-- **Event-Driven**: Services communicate through domain events, enabling loose coupling
-- **CQRS**: Queries via REST, Commands via message broker
+- **Database per Service (Target)**: Each microservice owns a dedicated database for isolation
+- **Event-Driven**: Services communicate through domain events where applicable
+- **CQRS (Target)**: Queries via REST, commands via message broker
+
+### Current Implementation Notes
+- **Databases**: Most services share a single PostgreSQL container (`postgres`). Tracking uses a separate `postgres-tracking`. This is a deviation from strict database-per-service.
+- **Command Flow**: Many commands are currently REST-based. RabbitMQ is used for a subset of events (e.g., marketplace/payment/notification flows).
+- **Activation Logic**: Exam activation is currently triggered on read (e.g., `/api/exams/active`) rather than scheduled jobs.
 
 ### Communication Patterns
 | Pattern | Technology | Usage |
@@ -22,6 +27,8 @@ A loosely coupled, event-driven microservices architecture implementing the Saga
 - JWT validation at API Gateway (per request)
 - RBAC enforcement per operation
 - Audit logging for sensitive operations
+
+**Note**: The gateway injects `X-Internal-Secret` for internal routes; services should still enforce JWT/RBAC where appropriate.
 
 ### Failure Handling
 - **Circuit Breakers**: Resilience4j for fault tolerance
@@ -468,6 +475,8 @@ flowchart TB
 | Tracking Service | 8090 | PostgreSQL (5440) | Shuttle GPS tracking |
 
 All services built with **Java 25 / Spring Boot**.
+
+**Runtime note**: In `docker-compose.yml`, most services share the same PostgreSQL container and are not exposed externally. The inventory above reflects intended service ports.
 
 ### Infrastructure Services
 
