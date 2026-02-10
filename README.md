@@ -11,6 +11,7 @@ A loosely coupled, event-driven microservices architecture implementing the Saga
 
 ### Current Implementation Notes
 - **Databases**: Most services share a single PostgreSQL container (`postgres`). Tracking uses a separate `postgres-tracking`. This is a deviation from strict database-per-service.
+- **TimescaleDB**: TimescaleDB (5441) is listed as a target, but the current Docker stack uses PostgreSQL only for IoT data. There is no TimescaleDB container in `docker-compose.yml`.
 - **Command Flow**: Many commands are currently REST-based. RabbitMQ is used for a subset of events (e.g., marketplace/payment/notification flows).
 - **Activation Logic**: Exam activation is currently triggered on read (e.g., `/api/exams/active`) rather than scheduled jobs.
 
@@ -471,7 +472,7 @@ flowchart TB
 | Payment Service | 8086 | PostgreSQL (5437) | Payment processing, Saga participant |
 | Exam Service | 8087 | PostgreSQL (5438) | Exams, submissions, Circuit Breaker |
 | Notification Service | 8088 | PostgreSQL (5439) | Email notifications, Observer pattern |
-| IoT Service | 8089 | TimescaleDB (5441) | Sensor data, time-series analytics |
+| IoT Service | 8089 | PostgreSQL (5432) | Sensor data (TimescaleDB planned) |
 | Tracking Service | 8090 | PostgreSQL (5440) | Shuttle GPS tracking |
 
 All services built with **Java 25 / Spring Boot**.
