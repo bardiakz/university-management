@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -33,6 +34,32 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     _loadUser();
   }
 
+  Map<String, dynamic>? _decodeJwtPayload(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      return jsonDecode(decoded) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String? _extractRole(String token) {
+    final payload = _decodeJwtPayload(token);
+    return payload?['role'] as String?;
+  }
+
+  bool _isTokenExpired(String token) {
+    final payload = _decodeJwtPayload(token);
+    final exp = payload?['exp'];
+    if (exp is! int) return false;
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    return exp <= now;
+  }
+
   Future<void> _loadUser() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -40,8 +67,15 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       final username = prefs.getString('username');
 
       if (token != null && username != null) {
+        if (_isTokenExpired(token)) {
+          await prefs.clear();
+          _apiService.clearToken();
+          state = const AsyncValue.data(null);
+          return;
+        }
         _apiService.setToken(token);
-        state = AsyncValue.data(User(username: username, token: token));
+        final role = _extractRole(token);
+        state = AsyncValue.data(User(username: username, token: token, role: role));
       } else {
         state = const AsyncValue.data(null);
       }
@@ -86,7 +120,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       await prefs.setString('token', response.token!);
       await prefs.setString('username', response.username!);
 
-      final user = User(username: response.username!, token: response.token!);
+      final role = _extractRole(response.token!);
+      final user = User(
+        username: response.username!,
+        token: response.token!,
+        role: role,
+      );
 
       state = AsyncValue.data(user);
     } catch (e) {
@@ -127,6 +166,10 @@ final userProfileProvider = FutureProvider.autoDispose<UserProfile?>((
     try {
       return await userService.getMyProfile();
     } catch (e) {
+      if (e is AuthException) {
+        await ref.read(authProvider.notifier).logout();
+        return null;
+      }
       if (e.toString().contains('Profile not found') && i < retries - 1) {
         // Profile doesn't exist yet, wait and retry
         debugPrint(
@@ -178,8 +221,8 @@ class UserInfo {
   bool get isAuthenticated => user != null;
 
   String get username => profile?.username ?? user?.username ?? 'User';
-  String get email => profile?.email ?? '';
-  String get role => profile?.role ?? 'STUDENT';
+  String get email => profile?.email ?? user?.email ?? '';
+  String get role => profile?.role ?? user?.role ?? 'STUDENT';
   String? get fullName => profile?.fullName;
   String? get studentNumber => profile?.studentNumber;
   String? get phoneNumber => profile?.phoneNumber;

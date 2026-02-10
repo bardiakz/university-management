@@ -8,11 +8,19 @@ import 'add_product_screen.dart';
 import 'payment_status_screen.dart';
 import 'my_payments_screen.dart';
 
-class MarketplaceScreen extends ConsumerWidget {
+class MarketplaceScreen extends ConsumerStatefulWidget {
   const MarketplaceScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MarketplaceScreen> createState() => _MarketplaceScreenState();
+}
+
+class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
+  String _query = '';
+  String? _category;
+
+  @override
+  Widget build(BuildContext context) {
     final productsAsync = ref.watch(productsProvider);
     final userInfo = ref.watch(currentUserInfoProvider);
 
@@ -49,20 +57,61 @@ class MarketplaceScreen extends ConsumerWidget {
           if (products.isEmpty) {
             return const Center(child: Text('No products available.'));
           }
+
+          final categories = <String>{
+            for (final p in products) p.category,
+          }.toList()
+            ..sort();
+
+          final filtered = products.where((p) {
+            final matchesQuery = _query.isEmpty ||
+                p.name.toLowerCase().contains(_query) ||
+                p.description.toLowerCase().contains(_query);
+            final matchesCategory = _category == null || p.category == _category;
+            return matchesQuery && matchesCategory;
+          }).toList();
+
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(productsProvider),
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.70,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                return _ProductCard(product: products[index]);
-              },
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _MarketplaceHeader(
+                    onQueryChanged: (value) {
+                      setState(() {
+                        _query = value.trim().toLowerCase();
+                      });
+                    },
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: _CategoryChips(
+                    categories: categories,
+                    selected: _category,
+                    onSelected: (value) {
+                      setState(() {
+                        _category = value;
+                      });
+                    },
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.72,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _ProductCard(product: filtered[index]),
+                      childCount: filtered.length,
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -98,6 +147,105 @@ class MarketplaceScreen extends ConsumerWidget {
               label: const Text('Add Product'),
             )
           : null,
+    );
+  }
+}
+
+class _MarketplaceHeader extends StatelessWidget {
+  final ValueChanged<String> onQueryChanged;
+
+  const _MarketplaceHeader({required this.onQueryChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Campus Marketplace',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Supplies, gadgets, and essentials for Guilan students',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.8),
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              onChanged: onQueryChanged,
+              decoration: InputDecoration(
+                hintText: 'Search products',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryChips extends StatelessWidget {
+  final List<String> categories;
+  final String? selected;
+  final ValueChanged<String?> onSelected;
+
+  const _CategoryChips({
+    required this.categories,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        children: [
+          ChoiceChip(
+            label: const Text('All'),
+            selected: selected == null,
+            onSelected: (_) => onSelected(null),
+          ),
+          const SizedBox(width: 8),
+          for (final category in categories) ...[
+            ChoiceChip(
+              label: Text(category),
+              selected: selected == category,
+              onSelected: (_) => onSelected(category),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -165,9 +313,14 @@ class _ProductCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final priceText = '\$${product.price.toStringAsFixed(2)}';
+    final isAvailable = product.stock > 0 && product.active;
+
     return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -175,10 +328,41 @@ class _ProductCard extends ConsumerWidget {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(4),
+                  gradient: LinearGradient(
+                    colors: [Colors.grey.shade100, Colors.grey.shade300],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                child: Stack(
+                  children: [
+                    const Center(
+                      child: Icon(Icons.inventory_2, size: 48, color: Colors.grey),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          priceText,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -190,7 +374,11 @@ class _ProductCard extends ConsumerWidget {
             ),
             Text(
               product.category,
-              style: const TextStyle(fontSize: 10, color: Colors.blue),
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.teal.shade700,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -215,11 +403,11 @@ class _ProductCard extends ConsumerWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.red.shade100,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text(
                       'Inactive',
-                      style: TextStyle(fontSize: 8, color: Colors.red),
+                      style: TextStyle(fontSize: 9, color: Colors.red),
                     ),
                   ),
               ],
@@ -229,17 +417,16 @@ class _ProductCard extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '\$${product.price.toStringAsFixed(2)}',
+                  isAvailable ? 'In stock' : 'Unavailable',
                   style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.bold,
+                    color: isAvailable ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add_shopping_cart),
-                  onPressed: product.stock > 0 && product.active
-                      ? () => _buyProduct(context, ref)
-                      : null,
+                ElevatedButton(
+                  onPressed: isAvailable ? () => _buyProduct(context, ref) : null,
+                  child: const Text('Buy'),
                 ),
               ],
             ),
