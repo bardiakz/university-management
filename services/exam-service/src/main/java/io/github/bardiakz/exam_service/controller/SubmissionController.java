@@ -67,7 +67,7 @@ public class SubmissionController {
     }
 
     @GetMapping("/exam/{examId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'FACULTY')")
     public ResponseEntity<List<SubmissionResponse>> getExamSubmissions(@PathVariable Long examId) {
         log.info("Fetching all submissions for exam {}", examId);
 
