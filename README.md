@@ -11,7 +11,6 @@ A loosely coupled, event-driven microservices architecture implementing the Saga
 
 ### Current Implementation Notes
 - **Databases**: Most services share a single PostgreSQL container (`postgres`). Tracking uses a separate `postgres-tracking`. This is a deviation from strict database-per-service.
-- **TimescaleDB**: TimescaleDB (5441) is listed as a target, but the current Docker stack uses PostgreSQL only for IoT data. There is no TimescaleDB container in `docker-compose.yml`.
 - **Command Flow**: Many commands are currently REST-based. RabbitMQ is used for a subset of events (e.g., marketplace/payment/notification flows).
 - **Activation Logic**: Exam activation is currently triggered on read (e.g., `/api/exams/active`) rather than scheduled jobs.
 
